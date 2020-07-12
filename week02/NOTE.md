@@ -2,8 +2,8 @@
 
 ### 性质
 
-- 动态：Runtime
-- 静态：Compiletime
+- 动态：`Runtime`
+- 静态：`Compiletime`
 
 ### 分类
 
@@ -30,9 +30,9 @@
     - `1`
     - `+1` `-1`
     - `1.` `.1`
-    - `0b1` <=> `0B1`
-    - `0o1` <=> `0O1`
-    - `0x1f` <=> `0X1F`
+    - `0b1`  `0B1`
+    - `0o1`  `0O1`
+    - `0x1f`  `0X1F`
   - RegExpLiteral
     - `/body/flag`
   - ArrayLiteral
@@ -59,10 +59,10 @@
 - Execution Context
   - running execution context（execution context stack）
   - Lexical Environment（以下会创建新的Lexical Environment）
-    - FunctionDeclaration
-    - BlockStatement
-    - Catch
-    - TryStatement
+    - `FunctionDeclaration`
+    - `BlockStatement`
+    - `Catch`
+    - `TryStatement`
 
 
 ## Number
@@ -91,7 +91,7 @@ Value = (-1)^sign * 2^(exponent - 1023) * (1 + fraction)
 
 // 0 01111111011 1001100110011001100...10
 0.1 ≈ (-1)^0 * 2^(1019 - 1023) * (1 + 2^-1 + 2^-4 + 2^-5 + 2^-8 + 2^-9 + ... + 2^-51)
-    ≈ 1 * 2^-4 * (1 + ?)
+    ≈ 1 * 2^-4 * (1 + ?不大于0.9)
     ≈ 0.062 * (1 + ?)
     ≈ 0.062 + 0.062*?
     ≈ 0.10000000000001
@@ -123,18 +123,18 @@ Grammar
 
 字符集
   - ASCII
-    - 0 ~ 127
+    - `0 ~ 127`
   - Unicode
-    - 1 byte: [0x00 ~ 0xff] [0 ~ 127]
-    - 2 byte: [0x80 ~ 0x7ff] [128 ~ 2047]
-    - 3 byte: [0x800 ~ 0xffff] [2048 ~ 65535]
-    - 4 byte: [0x10000 ~ 0x10ffff] [65536 ~ 1114111]
+    - 1 byte: [`0x00 ~ 0xff`] [`0 ~ 127`]
+    - 2 byte: [`0x80 ~ 0x7ff`] [`128 ~ 2047`]
+    - 3 byte: [`0x800 ~ 0xffff`] [`2048 ~ 65535`]
+    - 4 byte: [`0x10000 ~ 0x10ffff`] [`65536 ~ 1114111`]
 
 编码方式
   - UTF-8
-    - 用1～4个字节表示一个符号，可以根据不同的符号改变字节的长度，更利于存储
+    - 用`1～4个字节`表示一个符号，可以根据不同的符号改变字节的长度，更利于存储
   - UTF-16
-    - 用2～4个字节表示一个符号
+    - 用`2～4个字节`表示一个符号
 
 ## Object
 
@@ -143,9 +143,9 @@ Grammar
 > 设计对象的基本原则：**行为改变状态**
 
 ### **对象的三要素**
-  - State 状态
-  - Behavior 行为
-  - Identifier 标识
+  - **State** 状态
+  - **Behavior** 行为
+  - **Identifier** 标识
 
 ### **原型**
 
@@ -186,16 +186,20 @@ Foo.prototype.say = function() {}
 3. Foo上的p、bar属性不会共享给 f1、f2、FooP
 4. FooP上的q、say属性会共享给f1、f2，但Foo访问不到，因为不在Foo的隐式原型上
 
+/\
+|| 这种箭头代表 <隐式原型链接>,在浏览器中通过 <__proto__>，在js引擎中通过 <[[Prototype]]>
 
-     Object
-       /\
-       || 这种箭头代表 <隐式原型链接>
-       || 在浏览器中通过 <__proto__>，在js引擎中通过 <[[Prototype]]>
-       ||
------------------                 FooP
+---> 这这箭头代表 <显示原型属性>
+
+     Function
+       /\                           Object
+       ||                             /\
+       ||                             ||
+       ||                             ||
+-----------------             FooP    ||
 |      Foo      |        ----------------------
-|   prototype----------->|   constructor(Foo) |
-|       p       |        |          q         |
+|   prototype----------->|   constructor(Foo) | 
+|       p       |        |          q         | 
 |      bar      |        |         say        |
 -----------------        ---------------------- 
                           /\          /\

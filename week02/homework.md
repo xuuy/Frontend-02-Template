@@ -115,8 +115,8 @@ class Human {
   constructor(name) {
     this.name = name
     this.state = {
-      blood: 100
-      fear: 0
+      blood: 100,
+      fear: 0,
       pain: 0
     }
   }
@@ -169,7 +169,7 @@ Object
   [[Get]]: getter
   [[Set]]: setter
 Function
-  [[Call]]: apply
+  [[Call]]: 函数调用
   [[Construct]]: new
 Map
   [[HasProperty]]: has
