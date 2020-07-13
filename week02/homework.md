@@ -73,17 +73,17 @@ const UTF8_Encoding = str => {
     } else if (unicode >= 0x80 && unicode <= 0x7FF) {
       // 110xxxxx 10xxxxxx
       const _binary = binary.padStart(11, 0)
-      uft8Binary = `100${_binary.substr(0, 5)}  10${_binary.substr(5)}`
+      uft8Binary = `110${_binary.substr(0, 5)}  10${_binary.substr(5)}`
       result.push(uft8Binary)
     } else if (unicode >= 0x800 && unicode <= 0xFFFF) {
       // 1110xxxx 10xxxxxx 10xxxxxx
       const _binary = binary.padStart(16, 0)
-      uft8Binary = `110${_binary.substr(0, 4)} 10${_binary.substr(4, 6)} 10${_binary.substr(10)}`
+      uft8Binary = `1110${_binary.substr(0, 4)} 10${_binary.substr(4, 6)} 10${_binary.substr(10)}`
       result.push(uft8Binary)
     } else if (unicode >= 0x10000 && unicode <= 0x10FFFF){
       // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
       const _binary = binary.padStart(21, 0)
-      uft8Binary = `110${_binary.substr(0, 3)} 10${_binary.substr(3, 6)} 10${_binary.substr(9, 6)} 10${_binary.substr(15)}`
+      uft8Binary = `11110${_binary.substr(0, 3)} 10${_binary.substr(3, 6)} 10${_binary.substr(9, 6)} 10${_binary.substr(15)}`
       result.push(uft8Binary)
     }
     index++
