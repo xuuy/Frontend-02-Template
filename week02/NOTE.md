@@ -76,9 +76,10 @@
 指数偏移值(次方)：exponent
 分数值(精度)：fraction
 
-⚠️精度位有53位，52位为显性，1位为隐性（值为1，隐藏在exponent和fraction之间）
 
-Value = (-1)^sign * 2^(exponent - 1023) * (1 + fraction)
+⚠️精度位有53位，由于二进制的有效数字总是为1.xxx的形式，fraction第一位默认为1，故存储时省略，这个1隐藏在exponent和fraction之间
+
+Value = (-1)^sign * 2^(exponent - 1023) * 1.fraction
 
 1 = (-1)^0 * 2^(1023 - 1023) * (1 + 0)
 2 = (-1)^0 * 2^(1024 - 1023) * (1 + 0)
@@ -96,7 +97,6 @@ Value = (-1)^sign * 2^(exponent - 1023) * (1 + fraction)
     ≈ 0.062 + 0.062*?
     ≈ 0.10000000000001
 
-这里就知道了 0.1 + 0.2 ≠ 0.3
 ```
 
 Grammar
