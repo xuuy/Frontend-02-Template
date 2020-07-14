@@ -40,7 +40,9 @@
 
 > 写一段 JS 的函数，把一个 string 它代表的字节给它转换出来，用 UTF8 对 string 进行遍码。
 
-网上的补码操作看不懂，太难理解了，没用使用补码的转换，使用的比较死的办法，直接替换对应位的值
+~~网上的补码操作看不懂，太难理解了，没用使用补码的转换，使用的比较死的办法，直接替换对应位的值~~
+
+改进版
 
 ```javascript
 const UTF8_Encoding = str => {
@@ -57,34 +59,29 @@ const UTF8_Encoding = str => {
   let result = []
   while(index < size) {
     // 1. 将字符转换成unicode
-    const unicode = '0x' + string.charCodeAt(index).toString(16)
-    // 2. 将unicode转换成二进制
-    const binary = Number.parseInt(unicode, 16).toString(2)
-    // 3. 判断1～4字节
+    const unicode = string.charCodeAt(index)
+    // 2. 判断1～4字节
     // 1个字节：[0x00, 0x7f]
     // 2个字节：[0x80, 0x7ff]
     // 3个字节：[0x800, 0xffff]
     // 4个字节：[0x10000, 0x10ffff]
     if (unicode >= 0x00 && unicode <= 0x7F) {
-      // 4. 将x替换成字符的二进制，位不够需要补齐0
-      // 0xxxxxxx
-      uft8Binary = 0 + binary.padStart(7, 0)
-      result.push(uft8Binary)
+      result.push(unicode)
     } else if (unicode >= 0x80 && unicode <= 0x7FF) {
       // 110xxxxx 10xxxxxx
-      const _binary = binary.padStart(11, 0)
-      uft8Binary = `110${_binary.substr(0, 5)}  10${_binary.substr(5)}`
-      result.push(uft8Binary)
+      result.push(unicode >> 6 & 31 | 192)
+      result.push(unicode & 63 | 128)
     } else if (unicode >= 0x800 && unicode <= 0xFFFF) {
       // 1110xxxx 10xxxxxx 10xxxxxx
-      const _binary = binary.padStart(16, 0)
-      uft8Binary = `1110${_binary.substr(0, 4)} 10${_binary.substr(4, 6)} 10${_binary.substr(10)}`
-      result.push(uft8Binary)
+      result.push(unicode >> 12 & 15 | 224)
+      result.push(unicode >> 6 & 63 | 128)
+      result.push(unicode & 63 | 128)
     } else if (unicode >= 0x10000 && unicode <= 0x10FFFF){
       // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-      const _binary = binary.padStart(21, 0)
-      uft8Binary = `11110${_binary.substr(0, 3)} 10${_binary.substr(3, 6)} 10${_binary.substr(9, 6)} 10${_binary.substr(15)}`
-      result.push(uft8Binary)
+      result.push(unicode >> 18 & 7 | 240)
+      result.push(unicode >> 12 & 63 | 128)
+      result.push(unicode >> 6 & 63 | 128)
+      result.push(unicode & 63 | 128)
     }
     index++
   }
