@@ -28,15 +28,25 @@ const isWhichRadix = (number) => {
  * 检查字符串是否是规范的数字
  * 无法转换的则返回NaN
  * @returns {{
- *   flag: '0' | 'NaN' | 'Infinity' | 'Number',
- *   radix?: 2 | 8 | 10 | 16
- * }}
+ *   flag: '0' | '1' | 'NaN' | 'Infinity' | 'Number',
+ *   radix: 0 | 2 | 8 | 10 | 16,
+ *   json: {}
+ * }} flag: 1-number类型
  * */
 const checkSpecNumber = (string) => {
   // unll、undefined、''直接返回0
   if (string === '' || string == null) {
     return {
       flag: '0',
+      radix: 0,
+      json: {}
+    }
+  }
+
+  // number类型，则返回输入
+  if (typeof string === 'number') {
+    return {
+      flag: '1',
       radix: 0,
       json: {}
     }
@@ -140,6 +150,10 @@ export const StringToNumber = (string) => {
     return eval(flag)
   }
 
+  if (flag === '1') {
+    return string
+  }
+
   const { operator, binaryPerfix, binary, octalPerfix, octal, hexPerfix, hex, int, fraction, e } = json
 
   if (flag === 'Infinity') {
@@ -175,7 +189,3 @@ export const StringToNumber = (string) => {
     return new Number(result).valueOf()
   }
 }
-
-// const ret = StringToNumber('.0')
-// console.log('====>>', ret)
-// console.log(-Infinity === ret)

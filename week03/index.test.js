@@ -15,6 +15,32 @@ describe('week03', () => {
         expect(StringToNumber('')).toBe(0);
       });
     });
+
+    describe('number', () => {
+      it("input 0", () => {
+        expect(StringToNumber(0)).toBe(0);
+      });
+    
+      it("input 1e1", () => {
+        expect(StringToNumber(1e1)).toBe(10);
+      });
+    
+      it("input 1.1231", () => {
+        expect(StringToNumber(1.1231)).toBe(1.1231);
+      });
+
+      it("input 0b1", () => {
+        expect(StringToNumber(0b1)).toBe(1);
+      });
+
+      it("input 0o10", () => {
+        expect(StringToNumber(0o10)).toBe(8);
+      });
+
+      it("input 0x7f", () => {
+        expect(StringToNumber(0x7f)).toBe(127);
+      });
+    })
     
     describe("Reference", () => {
       it("input object", () => {
