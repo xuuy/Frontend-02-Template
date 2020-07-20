@@ -1,4 +1,4 @@
-import { StringToNumber } from ".";
+import { StringToNumber, NumberToString } from ".";
 
 describe('week03', () => {
   describe('stringToNumber', () => {
@@ -303,6 +303,32 @@ describe('week03', () => {
   })
 
   describe('numberToString', () => {
-    // TODO: ...
+    describe('octal', () => {
+      it('input 0', () => {
+        expect(NumberToString(0, 8)).toBe('0o0')
+      })
+  
+      it('input 7', () => {
+        expect(NumberToString(7, 8)).toBe('0o7')
+      })
+
+      it('input 8', () => {
+        expect(NumberToString(8, 8)).toBe('0o10')
+      })
+
+      it('input 28', () => {
+        expect(NumberToString(28, 8)).toBe('0o34')
+      })
+    })
+
+    describe('hex', () => {
+      it('input 15', () => {
+        expect(NumberToString(15, 16)).toBe('0xf')
+      })
+  
+      it('input 16', () => {
+        expect(NumberToString(16, 16)).toBe('0x10')
+      })
+    })
   })
 })

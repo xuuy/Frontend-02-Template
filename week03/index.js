@@ -216,3 +216,62 @@ export const StringToNumber = (string) => {
     return new Number(result).valueOf();
   }
 };
+
+
+var numMapHex = {
+  10: 'a',
+  11: 'b',
+  12: 'c',
+  13: 'd',
+  14: 'e',
+  15: 'f',
+}
+
+var prefix = radix => {
+  return radix === 2
+    ? '0b'
+    : radix === 8
+      ? '0o'
+      : radix === 16
+        ? '0x'
+        : ''
+}
+
+/** %是否为0 */
+var isModZero = (number, radix) => number % radix === 0
+
+/** 十进制 转换为 其他进制 */
+var toRadixNumber = (number, radix) => {
+  if (number < radix) {
+    return prefix(radix) + (numMapHex[number] || number)
+  }
+  let arr = []
+  while(number !== 0) {
+    if (isModZero(number, radix)) {
+      number /= radix
+      arr.push(0)
+    } else {
+      const n = number % radix
+      number = (number - n) / radix
+      arr.push(n)
+    }
+  }
+  if (radix === 16) {
+    arr = arr.map(n => numMapHex[n] || n)
+  }
+  return prefix(radix) + arr.reverse().join('')
+};
+
+/**
+ * 
+ * @param {number} number 
+ * @param {2 | 8 | 10 | 16} radix
+ */
+export const NumberToString = (number, radix = 10) => {
+  // 不管number是什么进制数，先转换成10进制，通过10进制统一转指定的raidx
+  number = StringToNumber(number)
+  if (radix === 10) {
+    return '' + number
+  }
+  return toRadixNumber(number, radix)
+}
