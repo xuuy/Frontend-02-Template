@@ -1,0 +1,30 @@
+{
+  "name": "week03",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@types/jest": "^26.0.5",
+    "jest": "^26.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "rootDir": ".",
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "transform": {
+      "^.+\\.[t|j]sx?$": "babel-jest"
+    },
+    "testRegex": ".test.js$",
+    "coverageDirectory": "coverage"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "babel-jest": "^26.1.0"
+  }
+}
