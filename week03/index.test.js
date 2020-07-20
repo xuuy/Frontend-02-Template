@@ -183,11 +183,15 @@ describe('week03', () => {
       })
     
       it('input 001', () => {
-        expect(StringToNumber('01')).toBe(1)
+        expect(StringToNumber('001')).toBe(1)
+      })
+
+      it('input 001.', () => {
+        expect(StringToNumber('001.')).toBe(NaN)
       })
     
       it('input 00.1', () => {
-        expect(StringToNumber('01')).toBe(NaN)
+        expect(StringToNumber('00.1')).toBe(NaN)
       })
     
       it('input 0.1', () => {
