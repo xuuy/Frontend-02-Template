@@ -299,6 +299,10 @@ describe('week03', () => {
       it('input -0.1e-2', () => {
         expect(StringToNumber('-0.1e-2')).toBe(-0.001)
       })
+
+      it('input 9e999', () => {
+        expect(StringToNumber('9e999')).toBe(Infinity)
+      })
     })
   })
 
