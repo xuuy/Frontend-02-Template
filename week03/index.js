@@ -34,8 +34,8 @@ const isWhichRadix = (number) => {
  * }} flag: 1-number类型
  * */
 const checkSpecNumber = (string) => {
-  // unll、undefined、''直接返回0
-  if (string === "" || string == null) {
+  // unll、''直接返回0
+  if (string === "" || string === null) {
     return {
       flag: "0",
       radix: 0,
@@ -52,7 +52,7 @@ const checkSpecNumber = (string) => {
     };
   }
 
-  // object、function直接返回NaN
+  // 非string类型直接返回NaN
   if (typeof string !== "string") {
     return {
       flag: "NaN",
@@ -131,12 +131,12 @@ const groupNormalize = (radix) => {
 };
 
 /** 其他进制 转换为 十进制 */
-const toDecimal = (string, raidx) => {
+const toDecimal = (string, radix) => {
   // 先分割成数组，然后顺序反转 011 => 110
   const strs = string.split("").reverse();
   return strs.reduce((sum, current, index) => {
     // 二进制 -> 十进制: 1 * 2 ** 0 + 1 * 2 ** 1 + 0 * 2 ** 2
-    sum += (hexMap[current] || current) * raidx ** index;
+    sum += (hexMap[current] || current) * radix ** index;
     return sum;
   }, 0);
 };
@@ -195,7 +195,7 @@ export const StringToNumber = (string) => {
     // 科学计数法
     if (e) {
       // 获取指数
-      const exponent = e.split("e")[1];
+      const exponent = e.split(/[eE]/)[1];
       // 记录小数和小数的位数
       let m;
       let n;
@@ -218,7 +218,7 @@ export const StringToNumber = (string) => {
 };
 
 
-var numMapHex = {
+const numMapHex = {
   10: 'a',
   11: 'b',
   12: 'c',
@@ -227,7 +227,7 @@ var numMapHex = {
   15: 'f',
 }
 
-var prefix = radix => {
+const prefix = radix => {
   return radix === 2
     ? '0b'
     : radix === 8
@@ -238,12 +238,14 @@ var prefix = radix => {
 }
 
 /** %是否为0 */
-var isModZero = (number, radix) => number % radix === 0
+const isModZero = (number, radix) => number % radix === 0
 
 /** 十进制 转换为 其他进制 */
-var toRadixNumber = (number, radix) => {
+const toRadixNumber = (number, radix, needPrefix = true) => {
   if (number < radix) {
-    return prefix(radix) + (numMapHex[number] || number)
+    return needPrefix 
+      ? prefix(radix) + (numMapHex[number] || number)
+      : numMapHex[number] || number
   }
   let arr = []
   while(number !== 0) {
@@ -259,8 +261,26 @@ var toRadixNumber = (number, radix) => {
   if (radix === 16) {
     arr = arr.map(n => numMapHex[n] || n)
   }
-  return prefix(radix) + arr.reverse().join('')
+  return needPrefix
+    ? prefix(radix) + arr.reverse().join('')
+    : arr.reverse().join('')
 };
+
+/** 将小数部分转换成对应的进制整数 */
+const fractionToInt = (fraction, radix) => {
+  const arr = []
+  const reg = /([01])\.?(\d+)?/;
+  // count的作用是防止无限循环，比如0.1，所以只记录32位吧
+  let count = 0
+  while(fraction !== 0 && count <= 32) {
+    const ret = fraction * radix;
+    const group = reg.exec(ret);
+    arr.push(group[1])
+    count++
+    fraction = group[2] == undefined ? 0 : `0.${group[2]}`
+  }
+  return `.${arr.join('')}`
+}
 
 /**
  * 
@@ -268,10 +288,50 @@ var toRadixNumber = (number, radix) => {
  * @param {2 | 8 | 10 | 16} radix
  */
 export const NumberToString = (number, radix = 10) => {
-  // 不管number是什么进制数，先转换成10进制，通过10进制统一转指定的raidx
+  // unll、''直接返回0
+  if (number === "" || number === null) {
+    return "0";
+  }
+
+  if (typeof number !== "number") {
+    return "NaN";
+  }
+
+  const reg$1 = /^([+-])?Infinity$/;
+  const reg$3 = /^([+-])?((\.[0-9]+|([1-9]+[0-9]*|0)(\.[0-9]*|\.)?)([eE][+-]{0,1}[0-9]+)?|(0+[0-9]*))(?![_$a-zA-Z0-9])$/;
+
+  if (!Number.isFinite(number)) {
+    if (Number.isNaN(number)) return "NaN";
+    reg$1.test(number)
+    return RegExp.$1 ? "-Infinity" : "Infinity"
+  }
+
+  // 不管number是什么进制数，先转换成10进制，通过10进制统一转指定的radix
   number = StringToNumber(number)
   if (radix === 10) {
     return '' + number
   }
-  return toRadixNumber(number, radix)
+
+  let operator
+  if (reg$3.test(number)) {
+    if (RegExp.$1) {
+      // 若为负数，则取绝对值，并记录+-
+      number = Math.abs(number)
+      operator = RegExp.$1
+    }
+  }
+
+  // 判断是否有小数，且不是科学计数法
+  if (RegExp.$5 && !RegExp.$6) {
+    const operator = RegExp.$1
+    const int = RegExp.$4;
+    const fraction = RegExp.$5;
+    const _int = toRadixNumber(int, radix, false);
+    const _fraction = fractionToInt(`0${fraction}`, radix)
+    // 不清楚二八十六进制的字面量如何表示，所以直接返回转换后的数字
+    return toNumberByOperator(_int + _fraction, operator)
+  }
+
+
+  return toNumberByOperator(toRadixNumber(number, radix), operator)
 }

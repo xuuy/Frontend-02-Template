@@ -2,13 +2,15 @@ import { StringToNumber, NumberToString } from ".";
 
 describe('week03', () => {
   describe('stringToNumber', () => {
-    describe("null, undefined, empty string", () => {
+    describe("undefined", () => {
+      it("input undefined", () => {
+        expect(StringToNumber(undefined)).toBe(NaN);
+      });
+    });
+
+    describe("null, empty string", () => {
       it("input null", () => {
         expect(StringToNumber(null)).toBe(0);
-      });
-    
-      it("input undefined", () => {
-        expect(StringToNumber(undefined)).toBe(0);
       });
     
       it("input empty string", () => {
@@ -266,14 +268,17 @@ describe('week03', () => {
     describe("科学计数法", () => {
       it('input 1e0', () => {
         expect(StringToNumber('1e0')).toBe(1)
+        expect(StringToNumber('1E0')).toBe(1)
       })
     
       it('input 1e+0', () => {
         expect(StringToNumber('1e+0')).toBe(1)
+        expect(StringToNumber('1E+0')).toBe(1)
       })
     
       it('input 1e-0', () => {
         expect(StringToNumber('1e-0')).toBe(1)
+        expect(StringToNumber('1E-0')).toBe(1)
       })
     
       it('input 1e2', () => {
@@ -307,6 +312,62 @@ describe('week03', () => {
   })
 
   describe('numberToString', () => {
+    describe("undefined", () => {
+      it("input undefined", () => {
+        expect(NumberToString(undefined)).toBe('NaN');
+      });
+    });
+
+    describe("null, empty string", () => {
+      it("input null", () => {
+        expect(NumberToString(null)).toBe('0');
+      });
+    
+      it("input empty string", () => {
+        expect(NumberToString('')).toBe('0');
+      });
+    });
+
+    describe("Reference", () => {
+      it("input object", () => {
+        expect(NumberToString({})).toBe('NaN');
+      });
+
+      it("input array", () => {
+        expect(NumberToString([])).toBe('NaN');
+      });
+
+      it("input function", () => {
+        expect(NumberToString(() => {})).toBe('NaN');
+      });
+    });
+
+    describe('binary', () => {
+      it('input 0', () => {
+        expect(NumberToString(0, 2)).toBe('0b0')
+      })
+  
+      it('input 1', () => {
+        expect(NumberToString(1, 2)).toBe('0b1')
+      })
+
+      it('input 2', () => {
+        expect(NumberToString(2, 2)).toBe('0b10')
+      })
+
+      it('input 7', () => {
+        expect(NumberToString(7, 2)).toBe('0b111')
+      })
+
+      it('input +127', () => {
+        expect(NumberToString(+127, 2)).toBe('0b1111111')
+      })
+
+      it('input -127', () => {
+        expect(NumberToString(-127, 2)).toBe('-0b1111111')
+      })
+    })
+
     describe('octal', () => {
       it('input 0', () => {
         expect(NumberToString(0, 8)).toBe('0o0')
@@ -323,6 +384,53 @@ describe('week03', () => {
       it('input 28', () => {
         expect(NumberToString(28, 8)).toBe('0o34')
       })
+
+      it('input +127', () => {
+        expect(NumberToString(+127, 8)).toBe('0o177')
+      })
+
+      it('input -127', () => {
+        expect(NumberToString(-127, 8)).toBe('-0o177')
+      })
+    })
+
+    describe('decimal', () => {
+      it('input 0', () => {
+        expect(NumberToString(0)).toBe('0')
+      })
+  
+      it('input 7', () => {
+        expect(NumberToString(7)).toBe('7')
+      })
+
+      it('input 8.', () => {
+        expect(NumberToString(8.)).toBe('8')
+      })
+
+      it('input .8', () => {
+        expect(NumberToString(.8)).toBe('0.8')
+      })
+
+      // 有个空格
+      it('input 8 ', () => {
+        expect(NumberToString(8 )).toBe('8')
+      })
+
+      it('input 0.8', () => {
+        expect(NumberToString(0.8)).toBe('0.8')
+      })
+
+      it('input 9.0', () => {
+        expect(NumberToString(9.0)).toBe('9')
+      })
+
+      it('input +127', () => {
+        expect(NumberToString(+127)).toBe('127')
+      })
+
+      it('input -127', () => {
+        expect(NumberToString(-127)).toBe('-127')
+      })
     })
 
     describe('hex', () => {
@@ -332,6 +440,236 @@ describe('week03', () => {
   
       it('input 16', () => {
         expect(NumberToString(16, 16)).toBe('0x10')
+      })
+
+      it('input +127', () => {
+        expect(NumberToString(+127, 16)).toBe('0x7f')
+      })
+
+      it('input -127', () => {
+        expect(NumberToString(-127, 16)).toBe('-0x7f')
+      })
+    })
+
+    describe('NaN', () => {
+      it('input NaN -> 2', () => {
+        expect(NumberToString(NaN, 2)).toBe('NaN')
+      })
+
+      it('input NaN -> 8', () => {
+        expect(NumberToString(NaN, 8)).toBe('NaN')
+      })
+
+      it('input NaN -> 10', () => {
+        expect(NumberToString(NaN)).toBe('NaN')
+      })
+
+      it('input NaN -> 16', () => {
+        expect(NumberToString(NaN, 16)).toBe('NaN')
+      })
+
+      it('input +NaN -> 2', () => {
+        expect(NumberToString(+NaN, 2)).toBe('NaN')
+      })
+
+      it('input +NaN -> 8', () => {
+        expect(NumberToString(+NaN, 8)).toBe('NaN')
+      })
+
+      it('input +NaN -> 10', () => {
+        expect(NumberToString(+NaN)).toBe('NaN')
+      })
+
+      it('input +NaN -> 16', () => {
+        expect(NumberToString(+NaN, 16)).toBe('NaN')
+      })
+
+      it('input -NaN -> 2', () => {
+        expect(NumberToString(-NaN, 2)).toBe('NaN')
+      })
+
+      it('input -NaN -> 8', () => {
+        expect(NumberToString(-NaN, 8)).toBe('NaN')
+      })
+
+      it('input -NaN -> 10', () => {
+        expect(NumberToString(-NaN)).toBe('NaN')
+      })
+
+      it('input -NaN -> 16', () => {
+        expect(NumberToString(-NaN, 16)).toBe('NaN')
+      })
+    })
+
+    describe('Infinity', () => {
+      it('input Infinity -> 2', () => {
+        expect(NumberToString(Infinity, 2)).toBe('Infinity')
+      })
+
+      it('input Infinity -> 8', () => {
+        expect(NumberToString(Infinity, 8)).toBe('Infinity')
+      })
+
+      it('input Infinity -> 10', () => {
+        expect(NumberToString(Infinity)).toBe('Infinity')
+      })
+
+      it('input Infinity -> 16', () => {
+        expect(NumberToString(Infinity, 16)).toBe('Infinity')
+      })
+
+      it('input +Infinity -> 2', () => {
+        expect(NumberToString(+Infinity, 2)).toBe('Infinity')
+      })
+
+      it('input +Infinity -> 8', () => {
+        expect(NumberToString(+Infinity, 8)).toBe('Infinity')
+      })
+
+      it('input +Infinity -> 10', () => {
+        expect(NumberToString(+Infinity)).toBe('Infinity')
+      })
+
+      it('input +Infinity -> 16', () => {
+        expect(NumberToString(+Infinity, 16)).toBe('Infinity')
+      })
+
+      it('input -Infinity -> 2', () => {
+        expect(NumberToString(-Infinity, 2)).toBe('-Infinity')
+      })
+
+      it('input -Infinity -> 8', () => {
+        expect(NumberToString(-Infinity, 8)).toBe('-Infinity')
+      })
+
+      it('input -Infinity -> 10', () => {
+        expect(NumberToString(-Infinity)).toBe('-Infinity')
+      })
+
+      it('input -Infinity -> 16', () => {
+        expect(NumberToString(-Infinity, 16)).toBe('-Infinity')
+      })
+    })
+
+    describe('maxinum safe integer', () => {
+      it('input MAX_SAFE_INTEGER -> 2', () => {
+        expect(NumberToString(Number.MAX_SAFE_INTEGER, 2)).toBe('0b11111111111111111111111111111111111111111111111111111')
+      })
+
+      it('input MAX_SAFE_INTEGER -> 8', () => {
+        expect(NumberToString(Number.MAX_SAFE_INTEGER, 8)).toBe('0o377777777777777777')
+      })
+
+      it('input MAX_SAFE_INTEGER -> 10', () => {
+        expect(NumberToString(Number.MAX_SAFE_INTEGER)).toBe('9007199254740991')
+      })
+
+      it('input MAX_SAFE_INTEGER -> 16', () => {
+        expect(NumberToString(Number.MAX_SAFE_INTEGER, 16)).toBe('0x1fffffffffffff')
+      })
+    })
+
+    describe('minimum safe integer', () => {
+      it('input MIN_SAFE_INTEGER -> 2', () => {
+        expect(NumberToString(Number.MIN_SAFE_INTEGER, 2)).toBe('-0b11111111111111111111111111111111111111111111111111111')
+      })
+
+      it('input MIN_SAFE_INTEGER -> 8', () => {
+        expect(NumberToString(Number.MIN_SAFE_INTEGER, 8)).toBe('-0o377777777777777777')
+      })
+
+      it('input MIN_SAFE_INTEGER -> 10', () => {
+        expect(NumberToString(Number.MIN_SAFE_INTEGER)).toBe('-9007199254740991')
+      })
+
+      it('input MIN_SAFE_INTEGER -> 16', () => {
+        expect(NumberToString(Number.MIN_SAFE_INTEGER, 16)).toBe('-0x1fffffffffffff')
+      })
+    })
+
+    describe('max value', () => {
+      it('input MAX_VALUE -> 2', () => {
+        expect(NumberToString(Number.MAX_VALUE, 2)).toBe('0b1111111111111111111111111111111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+      })
+
+      it('input MAX_VALUE -> 8', () => {
+        expect(NumberToString(Number.MAX_VALUE, 8)).toBe('0o177777777777777777400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+      })
+
+      it('input MAX_VALUE -> 10', () => {
+        expect(NumberToString(Number.MAX_VALUE)).toBe('1.7976931348623157e+308')
+      })
+
+      it('input MAX_VALUE -> 16', () => {
+        expect(NumberToString(Number.MAX_VALUE, 16)).toBe('0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+      })
+    })
+
+    // 小数
+    describe('float', () => {
+      it('input 0.1 -> 2', () => {
+        expect(NumberToString(0.1, 2)).toBe('0.000110011001100110011001100110011')
+      })
+
+      it('input 127.625 -> 2', () => {
+        expect(NumberToString(127.625, 2)).toBe('1111111.101')
+      })
+
+      it('input -0.1 -> 2', () => {
+        expect(NumberToString(-0.1, 2)).toBe('-0.000110011001100110011001100110011')
+      })
+    })
+
+    describe('overflow value', () => {
+      it('input 1.8E+308 -> 2', () => {
+        expect(NumberToString(1.8E+308, 2)).toBe('Infinity')
+      })
+
+      it('input 1.8E+308 -> 8', () => {
+        expect(NumberToString(1.8E+308, 8)).toBe('Infinity')
+      })
+
+      it('input 1.8E+308 -> 10', () => {
+        expect(NumberToString(1.8E+308)).toBe('Infinity')
+      })
+
+      it('input 1.8E+308 -> 16', () => {
+        expect(NumberToString(1.8E+308, 16)).toBe('Infinity')
+      })
+
+      it('input -1.8E+308 -> 2', () => {
+        expect(NumberToString(-1.8E+308, 2)).toBe('-Infinity')
+      })
+
+      it('input -1.8E+308 -> 8', () => {
+        expect(NumberToString(-1.8E+308, 8)).toBe('-Infinity')
+      })
+
+      it('input -1.8E+308 -> 10', () => {
+        expect(NumberToString(-1.8E+308)).toBe('-Infinity')
+      })
+
+      it('input -1.8E+308 -> 16', () => {
+        expect(NumberToString(-1.8E+308, 16)).toBe('-Infinity')
+      })
+    })
+
+    // 大于0小于Number.MIN_VALUE
+    describe('underflow min value', () => {
+      it('input 5e-325 -> 2', () => {
+        expect(NumberToString(5e-325, 2)).toBe('0b0')
+      })
+
+      it('input 5e-325 -> 8', () => {
+        expect(NumberToString(5e-325, 8)).toBe('0o0')
+      })
+
+      it('input 5e-325 -> 10', () => {
+        expect(NumberToString(5e-325)).toBe('0')
+      })
+
+      it('input 5e-325 -> 16', () => {
+        expect(NumberToString(5e-325, 16)).toBe('0x0')
       })
     })
   })
