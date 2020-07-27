@@ -90,3 +90,5 @@ P:      ABABC
 ![状态机](./state.png)
 
 ## HTTP
+
+...等看完[HTTP图解]这本书在写
