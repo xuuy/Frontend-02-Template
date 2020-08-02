@@ -9,6 +9,7 @@
   "dependencies": {
     "@types/jest": "^26.0.5",
     "css": "^3.0.0",
+    "images": "^3.2.3",
     "jest": "^26.1.0"
   },
   "jest": {

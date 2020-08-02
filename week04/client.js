@@ -1,6 +1,8 @@
 const net = require('net')
+const images = require('images')
 const { match } = require('./KMP')
 const { parserHTML } = require('./parser')
+const { render } = require('../week05/render')
 
 class Request {
   constructor(options) {
@@ -154,8 +156,11 @@ async function fetch() {
 
   const response = await request.send()
 
-  const DOM = parserHTML(response.body)
-  // console.log(DOM)
+  const dom = parserHTML(response.body)
+  
+  let viewport = images(800, 600)
+  
+  render(viewport, dom.children[0].children[3].children[1].children[0])
 }
 
 fetch()

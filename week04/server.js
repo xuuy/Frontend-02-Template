@@ -36,6 +36,10 @@ http.createServer((req, res) => {
     }
 
     #root {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       font-size: 20px;
     }
     
@@ -53,12 +57,7 @@ http.createServer((req, res) => {
     }
 
     .header {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      height: 50px;
-      background: #fee;
-      box-shadow: 0 1px 17px rgba(0,0,0,0.17);
+      flex: 1;
     }
 
     div[class=two] {
