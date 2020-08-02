@@ -11,7 +11,7 @@
 2. 解析HTML，生成DOM
     - 拿到response.body后，通过状态机处理HTML文本
     - 状态机的作用就是每一个状态机只消费一个字符，得到下一个状态，流转或者继续消费，直到状态结束（只写了一部分状态机）
-    - 当遇到一个<link><script><img>有连接时，又会向服务器发起一次请求(这里没有做)
+    - 当遇到一个link、script、img有连接时，又会向服务器发起一次请求(这里没有做)
     - 最终每一个元素节点、文本节点、注释节点、属性节点等会生成到一个Document Tree中，可以通过DOM来访问
     
 3. 解析CSS
@@ -44,17 +44,17 @@ css选择器可以指**简单选择器、复合选择器、复杂选择器、选
 > 简单选择器是在一个元素上存在一个单一的条件
 
 - type selector
-    - [<wq-name>](https://drafts.csswg.org/selectors-4/#typedef-wq-name) `|` [<ns-prefix>](https://drafts.csswg.org/selectors-4/#typedef-ns-prefix) `?` `*`
+    - [\<wq-name>](https://drafts.csswg.org/selectors-4/#typedef-wq-name) `|` [\<ns-prefix>](https://drafts.csswg.org/selectors-4/#typedef-ns-prefix) `?` `*`
 - universal selector
     - `*`
 - id selector
-    - [<hash-token>](https://drafts.csswg.org/css-syntax-3/#hash-token-diagram)
+    - [\<hash-token>](https://drafts.csswg.org/css-syntax-3/#hash-token-diagram)
 - class selector
-    - `.`[<ident-token>](https://drafts.csswg.org/css-syntax-3/#ident-token-diagram)
+    - `.`[\<ident-token>](https://drafts.csswg.org/css-syntax-3/#ident-token-diagram)
 - attribute selector
-    - `[`[<wq-name>](https://drafts.csswg.org/selectors-4/#typedef-wq-name) `]` `|` `[`[<wq-name>](https://drafts.csswg.org/selectors-4/#typedef-wq-name) [<attr-matcher>](https://drafts.csswg.org/selectors-4/#typedef-attr-matcher) `[`[<string-token>](https://drafts.csswg.org/css-syntax-3/#string-token-diagram) `|` [<ident-token>]() `]` [<attr-modifier>?](https://drafts.csswg.org/selectors-4/#typedef-attr-modifier) `]`
+    - `[`[\<wq-name>](https://drafts.csswg.org/selectors-4/#typedef-wq-name) `]` `|` `[`[\<wq-name>](https://drafts.csswg.org/selectors-4/#typedef-wq-name) [\<attr-matcher>](https://drafts.csswg.org/selectors-4/#typedef-attr-matcher) `[`[\<string-token>](https://drafts.csswg.org/css-syntax-3/#string-token-diagram) `|` [\<ident-token>]() `]` [\<attr-modifier>?](https://drafts.csswg.org/selectors-4/#typedef-attr-modifier) `]`
 - pseudo-class selector
-    - `:`[<ident-token>](https://drafts.csswg.org/css-syntax-3/#ident-token-diagram) `|` `:`[function-token](https://drafts.csswg.org/css-syntax-3/#function-token-diagram) [any-value](https://drafts.csswg.org/css-syntax-3/#typedef-any-value) `)`
+    - `:`[\<ident-token>](https://drafts.csswg.org/css-syntax-3/#ident-token-diagram) `|` `:`[\<function-token>](https://drafts.csswg.org/css-syntax-3/#function-token-diagram) [\<any-value>](https://drafts.csswg.org/css-syntax-3/#typedef-any-value) `)`
 - pseudo-element selector(CSS3+ use double-colon)
     - `: <pseudo-class-selector>`
 
