@@ -24,7 +24,7 @@ class Request {
   }
 
   /**
-   * @param {Socket} connection 
+   * @param {Socket} connection
    */
   send(connection) {
     return new Promise((resolve, reject) => {
@@ -43,13 +43,13 @@ class Request {
       connection.on('data', (data) => {
         parser.receive(data.toString())
         if (parser.isFinished) {
-          resolve(parser.response) 
+          resolve(parser.response)
           connection.end()
         }
       }).on('error', (err) => {
         reject(err)
         connection.end()
-      }) 
+      })
     })
   }
 
@@ -83,7 +83,7 @@ class ResponseParser {
 
   /**
    * 利用KMP算法
-   * @param {string} string 
+   * @param {string} string
    */
   receive(string) {
     let state
@@ -103,8 +103,8 @@ class ResponseParser {
   }
 
   /**
-   * 
-   * @param {string[]} response 
+   *
+   * @param {string[]} response
    */
   responseFomat(response) {
     this.statusLine = response[0]
@@ -131,8 +131,8 @@ class TrunkedBodyParse {
   }
 
   /**
-   * 
-   * @param {string[]} body 
+   *
+   * @param {string[]} body
    */
   parse(body) {
     this.length = parseInt(body[0], 16)
@@ -155,6 +155,7 @@ async function fetch() {
   const response = await request.send()
 
   const DOM = parserHTML(response.body)
+  // console.log(DOM)
 }
 
 fetch()

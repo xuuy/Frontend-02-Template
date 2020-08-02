@@ -1,3 +1,6 @@
+const css = require('../week05/css')
+const layout = require('../week05/layout')
+
 const EOF = Symbol('EOF')
 
 const EOFToken = {
@@ -11,7 +14,7 @@ let currentAttr = {
 }
 let currentTextNode = null
 
-const stack = [{ nodeType: 'document', nodeName: 'document', children: [] }]
+const stack = [{ nodeType: 'document', tagName: 'document', children: [] }]
 
 const emit = (token) => {
   if (token.type === 'DOCTYPE') {
@@ -26,7 +29,7 @@ const emit = (token) => {
       attributes: []
     }
 
-    element.nodeName = token.tagName
+    element.tagName = token.tagName
 
     for (const p in token) {
       if (token.hasOwnProperty(p)) {
@@ -40,7 +43,8 @@ const emit = (token) => {
     }
 
     top.children.push(element)
-    // element.parentNode = top
+    element.parentNode = top
+    css.computedCss(stack, element)
 
     if (!token.isSelfClosing) {
       stack.push(element)
@@ -48,9 +52,13 @@ const emit = (token) => {
 
     currentTextNode = null
   } else if (token.type === 'endTag') {
-    if (top.nodeName !== token.tagName) {
+    if (top.tagName !== token.tagName) {
       throw new Error('Tag doesn\'t match')
     } else {
+      if (token.tagName === 'style') {
+        css.parse(top.children[0].text)
+      }
+      layout(top)
       stack.pop()
     }
 
@@ -149,7 +157,6 @@ const tagName = c => {
     return tagName
   } else if (c === EOF) {
     emit(EOFToken)
-    return data
   } else {
     currentToken.tagName += c
     return tagName
@@ -474,7 +481,7 @@ const commentStartDash = c => {
     // <!->
     return data
   } else if (c === EOF) {
-    return 
+    return
   } else {
     // <!- anything else
     return comment
