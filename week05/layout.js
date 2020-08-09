@@ -16,7 +16,7 @@ const getStyle = element => {
 const Layout = function (element) {
   if (!element.computedStyle || JSON.stringify(element.computedStyle) === '{}') return
   const style = getStyle(element)
-  console.log(style)
+
   if (style.display !== 'flex') return
 
   const items = element.children.filter(e => e.nodeType === 'element')
