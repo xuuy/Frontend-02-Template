@@ -1,7 +1,8 @@
 /**
  * - [x] 支持complex selector、compound selector
- * - [ ] 支持Tree-Structural pseudo-classes (暂缓)
  * - [x] 支持任意的Attribute特性
+ * - [ ] 支持selector list
+ * - [ ] 支持Tree-Structural pseudo-classes
  */
 
 class CSS {
