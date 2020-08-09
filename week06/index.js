@@ -373,12 +373,5 @@ class CSS {
   }
 }
 
+// TODO: 大目标是解析出这种 css.parseComplexSelector("div#id.class[attr~=1]:nth-child(1):first-child:hover::before")
 export const css = new CSS()
-
-// div#id.class[attr~=1]:nth-child(1):first-child:hover::before
-// css.parseComplexSelector("div#id.class[attr~=1]:nth-child(1):first-child:hover::before")
-
-
-// 2. 请写出下面选择器的优先级： div#a.b .c[id=x] 0 1 3 1 #a:not(#b) 0 2 0 0 *.a 0 0 1 0 div.a 0 0 1 1
-
-// 3. 为什么 first-letter 可以设置 float 之类的，而 first-line 不行呢？（提交至 GitHub）
