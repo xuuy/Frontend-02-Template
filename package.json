@@ -13,7 +13,7 @@
     "jest": "^26.1.0"
   },
   "jest": {
-    "testEnvironment": "node",
+    "testEnvironment": "jsdom",
     "rootDir": ".",
     "moduleFileExtensions": [
       "js"
