@@ -356,8 +356,8 @@ class CSS {
   parseComplexSelector(rule) {
     // can split these string
     // div.a1 > div~ div.b2+div#c1[foo^=   bar     I]:first-child + .a2:nth-of-child(1) .a7 a[href="http://www.w3.org/"] i:hover
-    // [class="a1 b1 c1   d1    "] a[href="http://www.w3.org/"]
-    const reg = /(?: *[+>] *| *~ *(?!=)|(?<![\[="' ]) +(?!([ "']|[iIsS] *]|(["'])?([\w.] *)* *(["'])? *])))/g
+    // [class = "a1 b1 c1   d1    "] a[href = "http://www.w3.org/"]
+    const reg = /(?: *[+>] *| *~ *(?!=)|(?<![\[="' ]) +(?!([ ^$|*="']|[iIsS] *]|(["'])?([\w.] *)* *(["'])? *])))/g
     let combinators = []
     for (const m of rule.matchAll(reg)) {
       combinators.push(m[0])
