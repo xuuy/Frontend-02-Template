@@ -1,7 +1,7 @@
 
 ## 这周还做了个东西，也是为了复习和深入ES
 
-https://github.com/xuuy/es-executer
+https://github.com/xuuy/es-executor
 
 ## block level box
 
