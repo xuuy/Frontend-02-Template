@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>五子棋</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/react/16.8.6/umd/react.development.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/react-dom/16.8.6/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/material-ui/5.0.0-alpha.7/umd/material-ui.production.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+  />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <script src="https://cdn.bootcdn.net/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+      }
+
+      html {
+          width: 100%;
+          height: 100%;
+      }
+
+      html > body {
+          width: 100%;
+          height: 100%;
+          background-color: #e8edf5;
+      }
+
+      #root {
+          display: flex;
+          place-content: center;
+          height: 100%;
+          padding: 48px 24px;
+      }
+
+      canvas {
+          border-radius: 12px;
+          background-color: transparent;
+          cursor: pointer;
+      }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+</body>
+<script type="text/babel">
+  const { useState, useRef, useEffect } = React
+
+  class observePerformance {
+    constructor(name) {
+      this.name = name
+      this.log = 'computer falling'
+      this.startMark = name + '-start'
+      this.endMark = name + '-end'
+    }
+
+    start() {
+      performance.mark(this.startMark)
+    }
+
+    end() {
+      performance.mark(this.endMark)
+      performance.measure(this.name, this.startMark, this.endMark)
+      const [observer] = performance.getEntriesByName(this.name)
+      console.log('observe ' + this.log + ' time: ', observer.duration)
+      performance.clearMarks()
+      performance.clearMeasures()
+    }
+  }
+
+  const obp = new observePerformance('computer')
+
+  const Gomoku = (props) => {
+    const canvasRef = useRef('canvas')
+    const chessBoardLine = 15 // 棋盘横竖线大小 15*15的棋盘
+    const chessBoardSize = [14, 14] //棋盘格子
+    const chessBoardBackgroundColor = '#f2f4fa'
+    const chessBoardPadding = 20 // 上下左右 最低20
+    let [chessBoardCellWidth, setChessBoardCellWidth] = useState(50)
+    let [cursorShowDistance, setCursorShowDistance] = useState(20)
+    let [chessRadius, setChessRadius] = useState(20)
+    let [chessCollection] = useState([]) //棋盘布局数组
+    let [context, setContext] = useState(null)
+    let isBlackChess = 2
+    let cursorPoint = {}
+    let steps = 0
+    let count = 0
+    let wins = [] //赢法数组
+    let gamerWin = []
+    let computerWin = []
+    let gamerScore = [] //评分数组
+    let computerScore = []
+
+    /**
+     * 初始化画布
+     */
+    const initCanvas = () => {
+      const canvas = canvasRef.current
+      const wrap = document.getElementById('canvas-container')
+      const width = wrap.offsetWidth
+      const height = wrap.offsetHeight
+
+      const diff = width > height ? height : width
+
+      chessBoardCellWidth = (diff - 40) / chessBoardSize[0]
+      chessRadius = chessBoardCellWidth / 2
+      cursorShowDistance = chessBoardCellWidth / 2
+      chessRadius -= chessRadius / 4
+
+      setChessBoardCellWidth(chessBoardCellWidth)
+      setCursorShowDistance(cursorShowDistance)
+      setChessRadius(chessRadius)
+
+      // 设置画布大小
+      canvas.width = diff
+      canvas.height = diff
+      // 获取canvas上下文
+      context = canvas.getContext('2d')
+      setContext(context)
+    }
+
+    /**
+     * 初始化棋盘
+     */
+    const initChessBoard = () => {
+      // 绘制边框
+      context.fillStyle = chessBoardBackgroundColor
+      context.beginPath()
+      context.rect(
+        chessBoardPadding,
+        chessBoardPadding,
+        chessBoardCellWidth * chessBoardSize[0],
+        chessBoardCellWidth * chessBoardSize[1]
+      )
+      context.fill()
+      context.stroke()
+      context.closePath()
+
+      const beginX = chessBoardPadding
+      const beginY = chessBoardPadding
+      const endX = beginX + chessBoardCellWidth * chessBoardSize[0]
+      const endY = beginY + chessBoardCellWidth * chessBoardSize[1]
+
+      // 绘制横线
+      for (let i = 1; i < chessBoardSize[0]; i++) {
+        context.beginPath()
+        context.moveTo(beginX, beginY + chessBoardCellWidth * i)
+        context.lineTo(endX, beginY + chessBoardCellWidth * i)
+        context.stroke()
+        context.closePath()
+      }
+
+      // 绘制横线
+      for (let i = 1; i < chessBoardSize[1]; i++) {
+        context.beginPath()
+        context.moveTo(beginX + chessBoardCellWidth * i, beginY)
+        context.lineTo(beginX + chessBoardCellWidth * i, endY)
+        context.stroke()
+        context.closePath()
+      }
+    }
+
+    /**
+     * 初始化棋盘落子矩阵
+     */
+    const initCollection = () => {
+      // 棋盘和赢法数组初始化
+      for (let i = 0; i < chessBoardLine; i++) {
+        chessCollection[i] = []
+        wins[i] = []
+        for (let j = 0; j < chessBoardLine; j++) {
+          chessCollection[i][j] = 0
+          wins[i][j] = []
+        }
+      }
+
+      let len = chessBoardLine - 4
+
+      //横向赢法
+      for (let i = 0; i < chessBoardLine; i++) {
+        for (let j = 0; j < len; j++) {
+          for (let k = 0; k < 5; k++) {
+            wins[i][j + k][count] = true
+          }
+          count++
+        }
+      }
+      //纵向赢法
+      for (let i = 0; i < chessBoardLine; i++) {
+        for (let j = 0; j < len; j++) {
+          for (let k = 0; k < 5; k++) {
+            wins[j + k][i][count] = true
+          }
+          count++
+        }
+      }
+      //正斜赢法
+      for (let i = 0; i < len; i++) {
+        for (let j = 0; j < len; j++) {
+          for (let k = 0; k < 5; k++) {
+            wins[i + k][j + k][count] = true
+          }
+          count++
+        }
+      }
+      //反斜赢法
+      for (let i = 0; i < len; i++) {
+        for (let j = 14; j > 3; j--) {
+          for (let k = 0; k < 5; k++) {
+            wins[i + k][j - k][count] = true
+          }
+          count++
+        }
+      }
+
+      for (let i = 0; i < count; i++) {
+        gamerWin[i] = 0
+        computerWin[i] = 0
+      }
+    }
+
+    const clearChessBoard = () => {
+      const canvas = canvasRef.current
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      initCollection()
+      initChessBoard()
+    }
+
+    const bestChoice = () => {
+      let max = 0
+      let point = {
+        x: 0,
+        y: 0
+      }
+
+      for (let i = 0; i < chessBoardLine; i++) {
+        //评分数组初始化
+        gamerScore[i] = []
+        computerScore[i] = []
+        for (let j = 0; j < chessBoardLine; j++) {
+          gamerScore[i][j] = 0
+          computerScore[i][j] = 0
+        }
+      }
+
+      for (let i = 0; i < chessBoardLine; i++) {
+        for (let j = 0; j < chessBoardLine; j++) {
+          if (chessCollection[i][j] == 0) {
+            for (let k = 0; k < count; k++) {
+              if (wins[i][j][k]) {
+                if (gamerWin[k] == 1) {
+                  gamerScore[i][j] += 200
+                } else if (gamerWin[k] == 2) {
+                  gamerScore[i][j] += 400
+                } else if (gamerWin[k] == 3) {
+                  gamerScore[i][j] += 2000
+                } else if (gamerWin[k] == 4) {
+                  gamerScore[i][j] += 10000
+                }
+
+                if (computerWin[k] == 1) {
+                  computerScore[i][j] += 200
+                } else if (computerWin[k] == 2) {
+                  computerScore[i][j] += 420
+                } else if (computerWin[k] == 3) {
+                  computerScore[i][j] += 2100
+                } else if (computerWin[k] == 4) {
+                  computerScore[i][j] += 20000
+                }
+              }
+            }
+            if (gamerScore[i][j] > max) {
+              max = gamerScore[i][j]
+              point.x = i
+              point.y = j
+            } else if (gamerScore[i][j] == max) {
+              if (
+                computerScore[i][j] >
+                computerScore[point.x][point.y]
+              ) {
+                point.x = i
+                point.y = j
+              }
+            }
+
+            if (computerScore[i][j] > max) {
+              max = computerScore[i][j]
+              point.x = i
+              point.y = j
+            } else if (computerScore[i][j] == max) {
+              if (gamerScore[i][j] > gamerScore[point.x][point.y]) {
+                point.x = i
+                point.y = j
+              }
+            }
+          }
+        }
+      }
+      return point
+    }
+
+    const starting = (isComputer) => {
+      if (isComputer) {
+        falling(6, 6, computerWin, gamerWin, 2) 
+      }
+    }
+
+    const falling = (x, y, win1, win2, who) => {
+      isBlackChess = who
+      // 存储棋子位置
+      chessCollection[x][y] = isBlackChess
+      // 画棋子
+      drawChess(x, y, isBlackChess)
+
+      for (let k = 0; k < count; k++) {
+        if (wins[x][y][k]) {
+          win1[k]++
+          win2[k] = 6
+          if (win1[k] == 5) {
+            clearLastCursor()
+            clearChessBoard()
+            break
+          }
+        }
+      }
+    }
+
+    // 玩家落子
+    const gamerFalling = (x, y) => {
+      falling(x, y, gamerWin, computerWin, 1)
+    }
+    // 人机落子
+    const computerFalling = () => {
+      const choice = bestChoice()
+      falling(choice.x, choice.y, computerWin, gamerWin, 2)
+      obp.end()
+    }
+
+    /**
+     * 监听事件绑定
+     */
+    const addChessBoardEvent = () => {
+      const canvas = canvasRef.current
+      canvas.onmousemove = mouseMove
+      canvas.onmouseleave = mouseLeave
+      canvas.onclick = mouseClick
+    }
+
+    const mouseMove = (e) => {
+      const canvasX = e.offsetX
+      const canvasY = e.offsetY
+      const XPoint = locationX(canvasX)
+      const YPoint = locationY(canvasY)
+
+      // 如果不在棋盘某个点上，则返回
+      if (
+        XPoint === -1 ||
+        YPoint === -1 ||
+        existChess(XPoint, YPoint) ||
+        existCursor(XPoint, YPoint)
+      ) {
+        return
+      } else {
+        // 擦除上次光标位置
+        clearLastCursor()
+
+        drawCursor(XPoint, YPoint)
+
+        // 储存当前光标位置
+        cursorPoint = {
+          XPoint,
+          YPoint
+        }
+      }
+    }
+
+    const mouseLeave = () => {
+      clearLastCursor()
+    }
+
+    const mouseClick = (e) => {
+      const canvasX = e.offsetX
+      const canvasY = e.offsetY
+      const XPoint = locationX(canvasX)
+      const YPoint = locationY(canvasY)
+
+      // 如果不在棋盘某个点上，则返回
+      if (XPoint === -1 || YPoint === -1 || existChess(XPoint, YPoint)) {
+        return
+      } else {
+        gamerFalling(XPoint, YPoint)
+        obp.start()
+        computerFalling()
+      }
+    }
+
+    const clearLastCursor = () => {
+      const { XPoint, YPoint } = cursorPoint
+
+      // 如果没有光标储存或者该处已经有棋子了，则重绘此处
+      if (
+        typeof XPoint === 'undefined' ||
+        chessCollection[XPoint][YPoint] !== 0
+      )
+        return
+
+      const lastXPointPosition =
+        chessBoardPadding + XPoint * chessBoardCellWidth
+      const lastYPointPosition =
+        chessBoardPadding + YPoint * chessBoardCellWidth
+
+      // 擦除之前的光标
+      context.strokeStyle = chessBoardBackgroundColor
+      context.lineWidth = 3
+
+      context.beginPath()
+      context.moveTo(lastXPointPosition - 8, lastYPointPosition - 8)
+      context.lineTo(lastXPointPosition + 8, lastYPointPosition + 8)
+      context.stroke()
+      context.closePath()
+      context.beginPath()
+      context.moveTo(lastXPointPosition - 8, lastYPointPosition + 8)
+      context.lineTo(lastXPointPosition + 8, lastYPointPosition - 8)
+      context.stroke()
+      context.closePath()
+
+      // 将交叉处缺失的线段补齐
+      context.strokeStyle = 'rgb(0,0,0,1)'
+      context.lineWidth = 1
+      context.beginPath()
+
+      // 处理光标边缘情况
+      if (XPoint === 0) {
+        context.moveTo(lastXPointPosition, lastYPointPosition)
+      } else {
+        context.moveTo(lastXPointPosition - 3, lastYPointPosition)
+      }
+
+      if (XPoint === chessBoardSize[0]) {
+        context.lineTo(lastXPointPosition, lastYPointPosition)
+      } else {
+        context.lineTo(lastXPointPosition + 3, lastYPointPosition)
+      }
+
+      context.stroke()
+      context.closePath()
+      context.beginPath()
+
+      // 处理光标在边缘情况
+      if (YPoint === 0) {
+        context.moveTo(lastXPointPosition, lastYPointPosition)
+      } else {
+        context.moveTo(lastXPointPosition, lastYPointPosition - 3)
+      }
+
+      if (YPoint === chessBoardSize[1]) {
+        context.lineTo(lastXPointPosition, lastYPointPosition)
+      } else {
+        context.lineTo(lastXPointPosition, lastYPointPosition + 3)
+      }
+      context.stroke()
+      context.closePath()
+    }
+
+    /**
+     * 绘制棋盘焦点光标
+     */
+    const drawCursor = (XPoint, YPoint) => {
+      const XPointPosition = chessBoardPadding + XPoint * chessBoardCellWidth
+      const YPointPosition = chessBoardPadding + YPoint * chessBoardCellWidth
+
+      context.strokeStyle = '#1b1f1f'
+      context.lineWidth = 1
+
+      context.beginPath()
+      context.moveTo(XPointPosition - 5, YPointPosition - 5)
+      context.lineTo(XPointPosition + 5, YPointPosition + 5)
+      context.stroke()
+      context.closePath()
+      context.beginPath()
+      context.moveTo(XPointPosition - 5, YPointPosition + 5)
+      context.lineTo(XPointPosition + 5, YPointPosition - 5)
+      context.stroke()
+      context.closePath()
+    }
+
+    /**
+     * 绘制棋子
+     */
+    const drawChess = (XPoint, YPoint, isBlackChess) => {
+      const XPointPosition = chessBoardPadding + XPoint * chessBoardCellWidth
+      const YPointPosition = chessBoardPadding + YPoint * chessBoardCellWidth
+
+      const gradient = context.createRadialGradient(
+        XPointPosition,
+        YPointPosition,
+        10,
+        XPointPosition,
+        YPointPosition,
+        0
+      )
+      context.beginPath()
+      context.arc(
+        XPointPosition,
+        YPointPosition,
+        chessRadius,
+        0,
+        2 * Math.PI
+      )
+
+      if (isBlackChess === 2) {
+        gradient.addColorStop(0, '#0A0A0A')
+        gradient.addColorStop(1, '#636766')
+      } else {
+        gradient.addColorStop(0, '#e5e5e5')
+        gradient.addColorStop(1, '#FFF')
+      }
+
+      context.fillStyle = gradient
+      context.fill()
+      context.closePath()
+    }
+
+    /**
+     * 是否存在棋子
+     */
+    const existChess = (XPoint, YPoint) => {
+      return chessCollection[XPoint][YPoint] !== 0
+    }
+
+    /**
+     * 是否已经存在光标了
+     */
+    const existCursor = (XPoint, YPoint) => {
+      return (
+        cursorPoint.XPoint &&
+        cursorPoint.XPoint === XPoint &&
+        cursorPoint.YPoint === YPoint
+      )
+    }
+
+    /**
+     * 计算鼠标X方位在那个点上
+     */
+    const locationX = (canvasX) => {
+      const XPointInt = Math.floor(
+        (canvasX - chessBoardPadding) / chessBoardCellWidth
+      )
+
+      // 在棋盘外的，全部返回-1
+      if (canvasX < chessBoardPadding - cursorShowDistance) return -1
+      if (
+        canvasX >
+        chessBoardSize[0] * chessBoardCellWidth +
+        chessBoardPadding +
+        cursorShowDistance
+      ) {
+        return -1
+      }
+
+      const leftPointDiff =
+        canvasX - XPointInt * chessBoardCellWidth - chessBoardPadding
+      const rightPointDiff =
+        (XPointInt + 1) * chessBoardCellWidth + chessBoardPadding - canvasX
+
+      // 判断相关的左右两个点哪个到达临界触发点
+      if (leftPointDiff <= cursorShowDistance) {
+        return XPointInt
+      } else if (rightPointDiff <= cursorShowDistance) {
+        return XPointInt + 1
+      }
+
+      return -1
+    }
+
+    /**
+     * 计算鼠标Y方位在那个点上
+     */
+    const locationY = (canvasY) => {
+      const YPointInt = parseInt(
+        (canvasY - chessBoardPadding) / chessBoardCellWidth
+      )
+
+      // 在棋盘外的，全部返回-1
+      if (canvasY < chessBoardPadding - cursorShowDistance) return -1
+      if (
+        YPointInt >
+        chessBoardSize[1] * chessBoardCellWidth +
+        chessBoardPadding +
+        cursorShowDistance
+      )
+        return -1
+
+      const topPointDiff =
+        canvasY - YPointInt * chessBoardCellWidth - chessBoardPadding
+      const bottomPointDiff =
+        (YPointInt + 1) * chessBoardCellWidth + chessBoardPadding - canvasY
+
+      // 判断相关的左右两个点哪个到达临界触发点
+      if (topPointDiff <= cursorShowDistance) {
+        return YPointInt
+      } else if (bottomPointDiff <= cursorShowDistance) {
+        return YPointInt + 1
+      }
+
+      return -1
+    }
+
+    console.log(props)
+
+if (props.AI) {
+  starting(true)
+}
+
+    useEffect(() => {
+      initCanvas()
+      initChessBoard()
+      initCollection()
+      addChessBoardEvent()
+      console.log('updater', chessCollection)
+    }, [])
+    return (
+      <canvas ref={canvasRef}></canvas>
+    )
+  }
+</script>
+
+<script type="text/babel">
+  const {
+    colors,
+    CssBaseline,
+    ThemeProvider,
+    Container,
+    makeStyles,
+    createMuiTheme,
+    Button,
+    Grid,
+    Icon,
+    Backdrop
+  } = MaterialUI
+
+  // Create a theme instance.
+  const theme = createMuiTheme({
+    palette: {
+      primary: {
+        main: '#556cd6'
+      },
+      secondary: {
+        main: '#19857b'
+      },
+      error: {
+        main: colors.red.A400
+      },
+      background: {
+        default: '#fff'
+      }
+    }
+  })
+
+  const useStyles = makeStyles((theme) => ({
+    container: {
+      display: 'grid',
+      gridTemplate: `"a a c" 4fr
+                     "a a c" 4fr
+                     "b b c" 1fr / 1fr 1fr minmax(180px, 0.7fr)`,
+      gridRowGap: theme.spacing(1),
+      gridColumnGap: theme.spacing(3),
+      padding: theme.spacing(3),
+      border: '4px solid #000',
+      borderRadius: 24,
+      boxShadow: '4px 16px 20px 0 rgba(0,0,0,0.15)',
+      backgroundColor: '#fff'
+    },
+    choice: {
+      flexDirection: 'column',
+      zIndex: theme.zIndex.drawer + 1,
+      color: '#fff',
+      fontSize: 22,
+      backdropFilter: 'blur(3px)',
+      '& div': {
+        marginBottom: theme.spacing(2)
+      },
+      '& button:first-child': {
+        marginRight: theme.spacing(2)
+      }
+    },
+    itemA: {
+      gridArea: 'a',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 12,
+      backgroundColor: '#f2f4fa'
+    },
+    itemB: {
+      gridArea: 'b',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingTop: theme.spacing(1),
+      borderRadius: 12,
+      backgroundColor: '#f2f4fa'
+    },
+    itemC: {
+      gridArea: 'c',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2),
+      borderRadius: 12,
+      backgroundColor: '#f2f4fa'
+    },
+    action: {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    button: {
+      color: '#6f7883'
+    },
+    icon: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 40,
+      height: 40,
+      borderRadius: 40,
+      boxShadow: '0px 2px 10px 0 rgba(0,0,0,0.1)',
+      backgroundColor: '#fff',
+      cursor: 'pointer'
+    },
+    title: {
+      color: '#191d1c',
+      fontSize: 20,
+      fontWeight: 600
+    },
+    record: {
+      borderRadius: 10,
+      padding: theme.spacing(2),
+      marginTop: theme.spacing(2),
+      backgroundColor: '#0066fa',
+      color: '#fff'
+    },
+    steps: {
+      flex: 1,
+      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(3),
+      color: '#191d1c',
+      fontSize: 20,
+      fontWeight: 500,
+      '& >div': {
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: theme.spacing(2),
+        fontSize: 12,
+        color: '#2c3d5d',
+        '& div': {
+          width: 'fit-content',
+          padding: '6px 16px',
+          borderRadius: 8,
+          backgroundColor: '#fff',
+        }
+      }
+    },
+    timer: {
+      height: 40,
+      marginTop: 'auto',
+      paddingTop: theme.spacing(0.5),
+      borderRadius: 8,
+      boxShadow: '0px 2px 10px 0 rgba(0,0,0,0.1)',
+      backgroundColor: '#fff',
+      textAlign: 'center',
+      '& span': {
+        fontSize: 24,
+        fontWeight: 600
+      }
+    },
+    computer: {
+      textAlign: 'left',
+      '& >span': {
+        marginRight: theme.spacing(1),
+        boxShadow: 'none',
+        color: '#2196f3'
+      },
+      '& p': {
+        paddingTop: theme.spacing(0.5),
+        color: '#7e8596'
+      }
+    },
+    gamer: {
+      justifyContent: 'flex-end',
+      '& >span': {
+        order: 1,
+        marginLeft: theme.spacing(1),
+        boxShadow: 'none'
+      }
+    }
+  }))
+
+  function App() {
+    const classes = useStyles()
+    const [choiceChess, setChoiceChess] = useState(true)
+    const [AI, setAI] = useState(false)
+    const [totalTime, setTotalTime] = useState(0)
+
+    const start = (isAI) => {
+      setAI(isAI)
+      setChoiceChess(false)
+    }
+
+    return (
+      <Container maxWidth={false} fixed className={classes.container}>
+        <Backdrop className={classes.choice} open={choiceChess}>
+          <div>执黑棋者先下</div>
+          <div>请选择你的棋子</div>
+          <div>
+            <Button variant="contained" color="primary" style={{ backgroundColor: '#000' }} onClick={() => start(false)}>黑棋</Button>
+            <Button variant="contained" color="primary" style={{ backgroundColor: '#fff', color: '#000' }} onClick={() => start(true)}>白棋</Button>
+          </div>
+        </Backdrop>
+        <div id="canvas-container" className={classes.itemA}>
+          <Gomoku AI={AI} />
+        </div>
+        <div className={classes.itemB}>
+          <div className={classes.action}>
+            <Icon className={classes.icon}>restore</Icon>
+            <Button className={classes.button}>重新开始</Button>
+          </div>
+          <div className={classes.action}>
+            <Icon className={classes.icon}>call_missed</Icon>
+            <Button className={classes.button}>悔棋</Button>
+          </div>
+          <div className={classes.action}>
+            <Icon className={classes.icon}>contact_support</Icon>
+            <Button className={classes.button}>提示</Button>
+          </div>
+          <div className={classes.action}>
+            <Icon className={classes.icon}>mood</Icon>
+            <Button className={classes.button}>认输</Button>
+          </div>
+        </div>
+        <div className={classes.itemC}>
+          <div className={classes.title}>记录器</div>
+          <div className={classes.record}>
+            回合: 5 <br/>
+            时间: {totalTime}
+          </div>
+          <div className={classes.steps}>
+            <div className={classes.computer}>
+              <Icon className={classes.icon}>laptop</Icon>
+              <div>
+                <strong>(1, A)</strong>
+                <p>用时: 12ms</p>
+              </div>
+            </div>
+            <div className={classes.gamer}>
+              <Icon className={classes.icon}>directions_walk</Icon>
+              <div>
+                <strong>(1, A)</strong>
+                <p>用时: 1s</p>
+              </div>
+            </div>
+          </div>
+          <div className={classes.timer}>倒计时&nbsp;&nbsp;<span>30</span>&nbsp;s</div>
+        </div>
+      </Container>
+    )
+  }
+
+  ReactDOM.render(
+    <ThemeProvider theme={theme}>
+      {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+      <CssBaseline/>
+      <App/>
+    </ThemeProvider>,
+    document.querySelector('#root')
+  )
+</script>
+</html>

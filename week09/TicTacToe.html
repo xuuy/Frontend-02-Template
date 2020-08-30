@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;    
+        align-items: center;
+        height: 100vh;
+      }
+      #root {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        grid-gap: 2px;
+        width: 240px;
+        height: 240px;
+        place-items: center;
+      }
+      .cell {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        place-self: stretch;
+        font-size: 20px;
+        background-color: #2196F3;
+      }
+      .position {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        color: #eee;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const partten = [
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+      ];
+      const root = document.getElementById("root");
+      let color = 1
+      let deep = 0
+      let winner = ''
+      function show() {
+        root.innerHTML = ''
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            const div = document.createElement("div");
+            const position = document.createElement("div");
+            div.classList.add("cell");
+            position.classList.add("position");
+            position.innerText = `(${i},${j})`
+            div.innerText =
+              partten[i * 3 + j] === 1 ? "⭕️" : partten[i * 3 + j] === 2 ? "❌" : "";
+            div.addEventListener('click', () => move(i, j))
+            div.appendChild(position);
+            root.appendChild(div);
+          }
+        }
+      }
+
+      function move(x, y) {
+        if(partten[x * 3 + y] || winner) return
+        partten[x * 3 + y] = color
+        if (check(partten, color)) {
+          winner = color === 1 ? "⭕️" : "❌"
+          console.log(color === 1 ? "⭕️ win" : "❌ win")
+        }
+        color = 3 - color
+        deep = 0
+        computerMove()
+      }
+      function computerMove() {
+        let choice = bestChoice(partten, color)
+        if (choice.point) {
+          partten[choice.point[0] * 3 + choice.point[1]] = color
+        }
+        if (check(partten, color)) {
+          winner = color === 1 ? "⭕️" : "❌"
+          console.log(color === 1 ? "⭕️ win" : "❌ win")
+        }
+        color = 3 - color 
+        show()
+      }
+
+      function check(partten, color) {
+        // each row
+        for (let i = 0; i < 3; i++) {
+          let win = true
+          for (let j = 0; j < 3; j++) {
+            if (partten[i * 3 + j] !== color) {
+              win = false
+              break
+            }
+          }
+          if (win) {
+            return true
+          }
+        }
+
+        // each column
+        for (let i = 0; i < 3; i++) {
+          let win = true
+          for (let j = 0; j < 3; j++) {
+            if (partten[j * 3 + i] !== color) {
+              win = false
+              break
+            }
+          }
+          if (win) {
+            return true
+          }
+        }
+
+        {
+          // left diagonal
+          let win = true
+          for (let j = 0; j < 3; j++) {
+            if (partten[j * 3 + j] !== color) {
+              win = false
+              break
+            }
+          }
+          if (win) {
+            return true
+          }
+        }
+
+        {
+          // right diagonal
+          let win = true
+          for (let j = 0; j < 3; j++) {
+            if (partten[j * 3 + (2 - j)] !== color) {
+              win = false
+              break
+            }
+          }
+          if (win) {
+            return true
+          }
+        }
+      }
+
+      show()
+
+      function clone(partten) {
+        return Object.create(partten)
+      }
+
+      function bestChoice(partten, color) {
+        let p
+        if (p = willWin(partten, color)) {
+          return {
+            point: p,
+            result: 1
+          }
+        }
+        console.log('deep', deep++)
+        let result = -2
+        let point = null
+        outer: for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (partten[i * 3 + j]) {
+              continue
+            }
+            const temp = clone(partten)
+            temp[i * 3 + j] = color
+            const r = bestChoice(temp, 3 - color)
+            //
+            if (-r.result > result) {
+              result = -r.result
+              point = r.point
+              console.log(point, result)
+            }
+            if (result === 1) {
+              break outer
+            }
+          }
+        }
+
+        return {
+          point,
+          result: point ? result : 0
+        }
+      }
+
+      function willWin(partten, color) {
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (partten[i * 3 + j]) {
+              continue
+            }
+            const temp = clone(partten)
+            temp[i * 3 + j] = color
+            if (check(temp, color)) {
+              return [i, j]
+            }
+          }
+        }
+        return null
+      }
+    </script>
+  </body>
+</html>
