@@ -962,7 +962,7 @@
   }
 
   const scrollBottom = (dom) => {
-    setTimeout(()=>{})
+    setTimeout(()=>{}, 100)
     setTimeout(() => dom.scroll(0, dom.scrollHeight, ), 600)
   }
 
@@ -1049,8 +1049,8 @@
       if (store.status === 'end') {
         setAI(false)
         dispatch({ type: 'RESTART' })
-        setTime(0)
         await microtask()
+        setTime(0)
         start(AI)
       } else {
         setOpen(true)
