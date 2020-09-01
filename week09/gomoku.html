@@ -47,7 +47,7 @@
       @keyframes zoomIn {
           from {
               opacity: 0;
-              transform: scale(0.7);
+              transform: scale(0.78);
           }
       }
       .zoomIn {
@@ -909,14 +909,28 @@
         }
       }
     },
-    undo: {
+    describe: {
       justifyContent: 'center',
+      flexDirection: 'column',
       '& span': {
         display: 'inline-block',
         padding: '2px 4px',
         background: '#e2e2e2',
-        color: '#525252',
+        color: '#673ab7',
         borderRadius: 4,
+        '&:not(:first-child)': {
+          marginTop: theme.spacing(1)
+        }
+      }
+    },
+    gameOver: {
+      '& span': {
+        color: '#E91E63'
+      }
+    },
+    recommend: {
+      '& span': {
+        color: '#2196f3'
       }
     },
     timer: {
@@ -988,7 +1002,11 @@
     } else if (action.type === 'STOP') {
       state.status = 'end'
       state.winner = action.payload.winner
-      state.record.push({ type: 'over', text: state.winner === 'computer' ? `您输了! 不要气馁  再接再厉` : `恭喜 玩家 赢得比赛` })
+      state.record.push({
+        type: 'over',
+        win: state.winner === 'gamer',
+        text: state.winner === 'computer' ? `您输了! 不要气馁  再接再厉` : `恭喜 玩家 赢得比赛`
+      })
       scrollBottom(state.ref)
     } else if (action.type === 'RESTART') { 
       state.status = 'restart'
@@ -1018,7 +1036,7 @@
       state.tips = action.payload.tips
       if (!state.tips) {
         const {x, y} = action.payload.position
-        state.record.push({ ...action.payload, text: `推荐位置(${RulerMap[x]}, ${y})` })
+        state.record.push({ ...action.payload, type: 'tips', text: `推荐位置(${RulerMap[x]}, ${y})` })
         scrollBottom(state.ref)
       }
     }
@@ -1161,7 +1179,13 @@
                       </div>
                     </div>
                   } else {
-                    Dom = <div className={classes.undo} key={index}>
+                    Dom = <div className={rec.type === 'over'
+                      ? [classes.gameOver, classes.describe].join(' ')
+                      : rec.type === 'tips'
+                        ? [classes.recommend, classes.describe].join(' ')
+                        : classes.describe
+                    } key={index}>
+                      {rec.type === 'over' && <span>游戏结束</span>}
                       <span>{rec.text}</span>
                     </div>
                   }
