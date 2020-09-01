@@ -7,6 +7,7 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/react/16.8.6/umd/react.development.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/react-dom/16.8.6/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/material-ui/5.0.0-alpha.7/umd/material-ui.production.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/moment.js/1.0.0/moment.min.js"></script>
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
@@ -765,7 +766,8 @@
     DialogTitle,
     DialogContent,
     DialogContentText,
-    DialogActions
+    DialogActions,
+    CircularProgress
   } = MaterialUI
 
   const theme = createMuiTheme({
@@ -844,6 +846,13 @@
       padding: theme.spacing(2),
       borderRadius: 12,
       backgroundColor: '#f2f4fa'
+    },
+    fabProgress: {
+      color: theme.primary,
+      position: 'absolute',
+      top: -4,
+      left: 8,
+      zIndex: 1,
     },
     action: {
       display: 'flex',
@@ -952,8 +961,7 @@
     winner: null,
     computerChess: 1,
     steps: 0,
-    totalTime: 0,
-    totalTimer: 30,
+    totalTimer: null,
     redo: [], // 记录棋子
     undo: false,
     tips: false,
@@ -977,14 +985,10 @@
     } else if (action.type === 'START') {
       state.status = 'start'
       state.totalTimer = action.payload.timer
-    } else if (action.type === 'START_TIMER') {
-      state.totalTime++
     } else if (action.type === 'STOP') {
       state.status = 'end'
       state.winner = action.payload.winner
       state.record.push({ type: 'over', text: state.winner === 'computer' ? `您输了! 不要气馁  再接再厉` : `恭喜 玩家 赢得比赛` })
-      state.totalTimer = null
-      clearInterval(state.totalTimer)
       scrollBottom(state.ref)
     } else if (action.type === 'RESTART') { 
       state.status = 'restart'
@@ -1038,7 +1042,12 @@
       setAI(computerFirst)
       setChoiceVisible(false)
       const timer = setInterval(() => {
-        setTime(c => c + 1)
+        if(store.status === 'end') {
+          setOver(true)
+          clearInterval(timer)
+        } else {
+          setTime(c => c + 1)
+        }
       }, 1000)
       dispatch({ type: 'START', payload: { timer } })
     }
@@ -1085,12 +1094,8 @@
     }
 
     const tips = () => {
-      if (store.status === 'end') return
+      if (store.status === 'end' || store.tips) return
       dispatch({ type: 'TIPS', payload: { tips: true } })
-    }
-
-    if(store.status === 'end') {
-      setTimeout(() => setTime(0))
     }
 
     useEffect(() => {
@@ -1127,8 +1132,9 @@
               <Icon className={classes.icon}>call_missed</Icon>
               <Button className={classes.button}>悔棋</Button>
             </div>
-            <div className={classes.action} onClick={tips}>
+            <div className={classes.action} onClick={tips} style={{position: 'relative'}}>
               <Icon className={classes.icon}>contact_support</Icon>
+              {store.tips && <CircularProgress size={48} className={classes.fabProgress} />}
               <Button className={classes.button}>提示</Button>
             </div>
             <div className={classes.action} onClick={stop}>
@@ -1140,7 +1146,7 @@
             <div className={classes.title}>记录器</div>
             <div className={classes.steps}>
               回合: {store.steps} <br/>
-              时间: {time}
+              时间: {moment(time * 1000).format('mm:ss')}
             </div>
             <div ref={RecordRef} className={classes.record}>
               {
