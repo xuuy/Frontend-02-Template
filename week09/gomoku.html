@@ -11,7 +11,7 @@
     rel="stylesheet"
     href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
   />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
   <script src="https://cdn.bootcdn.net/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
   <style>
       * {
@@ -42,39 +42,96 @@
           background-color: transparent;
           cursor: pointer;
       }
+
+      @keyframes zoomIn {
+          from {
+              opacity: 0;
+              transform: scale(0.7);
+          }
+      }
+      .zoomIn {
+          animation: zoomIn 0.3s ease both;
+      }
+
+      ::-webkit-scrollbar {
+          display: none;
+          width: 6px;
+          height: 4px
+      }
+
+      ::-webkit-scrollbar-track {
+          background: #f6f6f6;
+          border-radius: 3px
+      }
+
+      ::-webkit-scrollbar-thumb {
+          background: #aaa;
+          border-radius: 14px
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+          background: #747474
+      }
   </style>
 </head>
 <body>
 <div id="root"></div>
 </body>
 <script type="text/babel">
-  const { useState, useRef, useEffect } = React
+  const { useState, useRef, useEffect, useContext, useReducer, createContext, useCallback } = React
 
+  const RulerMap = {
+    0: 'a',
+    1: 'b',
+    2: 'c',
+    3: 'd',
+    4: 'e',
+    5: 'f',
+    6: 'g',
+    7: 'h',
+    8: 'i',
+    9: 'j',
+    10: 'k',
+    11: 'l',
+    12: 'm',
+    13: 'n',
+    14: 'o',
+  }
   class observePerformance {
     constructor(name) {
       this.name = name
-      this.log = 'computer falling'
       this.startMark = name + '-start'
       this.endMark = name + '-end'
+      this.isStart = false
     }
 
     start() {
       performance.mark(this.startMark)
+      this.isStart = true
     }
 
-    end() {
+    end(callback) {
+      if (!this.isStart) return
       performance.mark(this.endMark)
       performance.measure(this.name, this.startMark, this.endMark)
       const [observer] = performance.getEntriesByName(this.name)
-      console.log('observe ' + this.log + ' time: ', observer.duration)
-      performance.clearMarks()
-      performance.clearMeasures()
+      let duration = observer.duration
+      if (duration / 1000 > 1) {
+        duration = (duration / 1000).toFixed(2) + 's'
+      } else {
+        duration = duration.toFixed(2) + 'ms'
+      }
+      callback(duration)
+      performance.clearMarks(this.name)
+      performance.clearMeasures(this.name)
     }
   }
 
-  const obp = new observePerformance('computer')
+  const gamerOB = new observePerformance('gamer')
+  const computerOB = new observePerformance('computer')
 
   const Gomoku = (props) => {
+    const [store, dispatch] = useContext(StoreContext)
     const canvasRef = useRef('canvas')
     const chessBoardLine = 15 // 棋盘横竖线大小 15*15的棋盘
     const chessBoardSize = [14, 14] //棋盘格子
@@ -83,15 +140,14 @@
     let [chessBoardCellWidth, setChessBoardCellWidth] = useState(50)
     let [cursorShowDistance, setCursorShowDistance] = useState(20)
     let [chessRadius, setChessRadius] = useState(20)
-    let [chessCollection] = useState([]) //棋盘布局数组
+    let [chessCollection, setChessCollection] = useState([]) //棋盘布局数组
     let [context, setContext] = useState(null)
+    let [wins] = useState([]) //赢法数组
+    let [gamerWin] = useState([])
+    let [computerWin] = useState([])
+    let [count] = useState(0)
     let isBlackChess = 2
     let cursorPoint = {}
-    let steps = 0
-    let count = 0
-    let wins = [] //赢法数组
-    let gamerWin = []
-    let computerWin = []
     let gamerScore = [] //评分数组
     let computerScore = []
 
@@ -162,6 +218,17 @@
         context.stroke()
         context.closePath()
       }
+
+      // 绘制标尺
+      for (let i = 0; i <= chessBoardSize[0]; i++) {
+        context.fillStyle = '#000'
+        context.fillText(i, beginX - 20, beginY + chessBoardCellWidth * i + 2)
+      }
+
+      for (let i = 0; i <= chessBoardSize[1]; i++) {
+        context.fillStyle = '#000'
+        context.fillText(RulerMap[i], beginX + chessBoardCellWidth * i - 2, beginY - 8)
+      }
     }
 
     /**
@@ -177,6 +244,8 @@
           wins[i][j] = []
         }
       }
+
+      // setChessCollection
 
       let len = chessBoardLine - 4
 
@@ -303,14 +372,8 @@
       return point
     }
 
-    const starting = (isComputer) => {
-      if (isComputer) {
-        falling(6, 6, computerWin, gamerWin, 2) 
-      }
-    }
-
-    const falling = (x, y, win1, win2, who) => {
-      isBlackChess = who
+    const falling = (x, y, win1, win2, chess, who) => {
+      isBlackChess = chess
       // 存储棋子位置
       chessCollection[x][y] = isBlackChess
       // 画棋子
@@ -321,8 +384,7 @@
           win1[k]++
           win2[k] = 6
           if (win1[k] == 5) {
-            clearLastCursor()
-            clearChessBoard()
+            dispatch({ type: 'STOP', payload: { winner: who  } })
             break
           }
         }
@@ -331,13 +393,35 @@
 
     // 玩家落子
     const gamerFalling = (x, y) => {
-      falling(x, y, gamerWin, computerWin, 1)
+      gamerOB.end((duration) =>
+        dispatch({
+          type: 'FALLING', payload: {
+            type: 'chess',
+            who: 'gamer',
+            position: [x, y],
+            duration
+          }
+        }))
+      falling(x, y, gamerWin, computerWin, 3 - store.computerChess, 'gamer')
     }
     // 人机落子
-    const computerFalling = () => {
-      const choice = bestChoice()
-      falling(choice.x, choice.y, computerWin, gamerWin, 2)
-      obp.end()
+    const computerFalling = (x, y) => {
+      computerOB.start()
+      if (!x) {
+        const choice = bestChoice()
+        x = choice.x
+        y = choice.y
+      }
+      computerOB.end((duration) =>
+        dispatch({
+          type: 'FALLING', payload: {
+            type: 'chess',
+            who: 'computer',
+            position: [x, y],
+            duration
+          }
+        }))
+      falling(x, y, computerWin, gamerWin, store.computerChess, 'computer')
     }
 
     /**
@@ -393,8 +477,15 @@
         return
       } else {
         gamerFalling(XPoint, YPoint)
-        obp.start()
+        // 如果是AI先开始，则在gamer结束，记一回合
+        if (store.computerChess === 2) dispatch({ type: 'STEPS' })
+
         computerFalling()
+
+        // AI结束，玩家开始计时
+        gamerOB.start()
+        // 否则就是在AI结束，记一回合
+        if (store.computerChess !== 2) dispatch({ type: 'STEPS' })
       }
     }
 
@@ -610,18 +701,47 @@
       return -1
     }
 
-    console.log(props)
+    if(store.status === 'restart') {
+      clearChessBoard()
+      clearLastCursor()
+    }
 
-if (props.AI) {
-  starting(true)
-}
+    if (!store.redo.length) {
+      if (props.AI) {
+        computerFalling(7, 7)
+        gamerOB.start()
+      } else {
+        gamerOB.start()
+      }
+    }
+
+    if (store.tips) {
+      dispatch({ type: 'TIPS', payload: { tips: false, position: bestChoice() } })
+    }
+
+    if (store.undo) {
+      // 一次悔棋操作，黑白棋各回退一步
+      const [B, W] = store.redo.slice(-2)
+      chessCollection[B.position[0]][B.position[1]] = 0
+      chessCollection[W.position[0]][W.position[1]] = 0
+      const canvas = canvasRef.current
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      initChessBoard()
+      for (let i = 0; i < chessBoardLine; i++) {
+        for (let j = 0; j < chessBoardLine; j++) {
+          if(chessCollection[i][j]) {
+            drawChess(i, j, chessCollection[i][j])
+          }
+        }
+      }
+      dispatch({ type: 'UNDO', payload: { undo: false } })
+    }
 
     useEffect(() => {
       initCanvas()
       initChessBoard()
       initCollection()
       addChessBoardEvent()
-      console.log('updater', chessCollection)
     }, [])
     return (
       <canvas ref={canvasRef}></canvas>
@@ -640,17 +760,21 @@ if (props.AI) {
     Button,
     Grid,
     Icon,
-    Backdrop
+    Backdrop,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
   } = MaterialUI
 
-  // Create a theme instance.
   const theme = createMuiTheme({
     palette: {
       primary: {
         main: '#556cd6'
       },
       secondary: {
-        main: '#19857b'
+        main: '#9e9e9e'
       },
       error: {
         main: colors.red.A400
@@ -688,7 +812,15 @@ if (props.AI) {
         marginRight: theme.spacing(2)
       }
     },
+    over: {
+      position: 'absolute',
+      top: 0,
+      width: '100%',
+      height: '100%',
+      opacity: 0
+    },
     itemA: {
+      position: 'relative',
       gridArea: 'a',
       display: 'flex',
       justifyContent: 'center',
@@ -717,7 +849,7 @@ if (props.AI) {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
-      alignItems: 'center',
+      alignItems: 'center'
     },
     button: {
       color: '#6f7883'
@@ -738,20 +870,22 @@ if (props.AI) {
       fontSize: 20,
       fontWeight: 600
     },
-    record: {
+    steps: {
       borderRadius: 10,
       padding: theme.spacing(2),
       marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
       backgroundColor: '#0066fa',
       color: '#fff'
     },
-    steps: {
+    record: {
       flex: 1,
       paddingTop: theme.spacing(2),
       paddingBottom: theme.spacing(3),
       color: '#191d1c',
       fontSize: 20,
       fontWeight: 500,
+      overflow: 'auto',
       '& >div': {
         display: 'flex',
         alignItems: 'center',
@@ -762,13 +896,23 @@ if (props.AI) {
           width: 'fit-content',
           padding: '6px 16px',
           borderRadius: 8,
-          backgroundColor: '#fff',
+          backgroundColor: '#fff'
         }
+      }
+    },
+    undo: {
+      justifyContent: 'center',
+      '& span': {
+        display: 'inline-block',
+        padding: '2px 4px',
+        background: '#e2e2e2',
+        color: '#525252',
+        borderRadius: 4,
       }
     },
     timer: {
       height: 40,
-      marginTop: 'auto',
+      marginTop: 20,
       paddingTop: theme.spacing(0.5),
       borderRadius: 8,
       boxShadow: '0px 2px 10px 0 rgba(0,0,0,0.1)',
@@ -801,73 +945,247 @@ if (props.AI) {
     }
   }))
 
-  function App() {
-    const classes = useStyles()
-    const [choiceChess, setChoiceChess] = useState(true)
-    const [AI, setAI] = useState(false)
-    const [totalTime, setTotalTime] = useState(0)
+  const StoreContext = createContext(null)
 
-    const start = (isAI) => {
-      setAI(isAI)
-      setChoiceChess(false)
+  const Store = {
+    status: null,
+    winner: null,
+    computerChess: 1,
+    steps: 0,
+    totalTime: 0,
+    totalTimer: 30,
+    redo: [], // 记录棋子
+    undo: false,
+    tips: false,
+    record: [], // 记录所有操作，黑白棋下子、悔棋、提示
+    ref: null
+  }
+
+  const scrollBottom = (dom) => {
+    setTimeout(()=>{})
+    setTimeout(() => dom.scroll(0, dom.scrollHeight, ), 600)
+  }
+
+  const storeReducer = (state, action) => {
+    if (action.type === 'REF') {
+      state.ref = action.payload.element
+    } else if (action.type === 'FALLING') {
+      const [x, y] = action.payload.position
+      state.record.push({ ...action.payload, text: `(${RulerMap[x]}, ${y})` })
+      state.redo = state.record.filter(v => v.type === 'chess')
+      scrollBottom(state.ref)
+    } else if (action.type === 'START') {
+      state.status = 'start'
+      state.totalTimer = action.payload.timer
+    } else if (action.type === 'START_TIMER') {
+      state.totalTime++
+    } else if (action.type === 'STOP') {
+      state.status = 'end'
+      state.winner = action.payload.winner
+      state.record.push({ type: 'over', text: state.winner === 'computer' ? `您输了! 不要气馁  再接再厉` : `恭喜 玩家 赢得比赛` })
+      state.totalTimer = null
+      clearInterval(state.totalTimer)
+      scrollBottom(state.ref)
+    } else if (action.type === 'RESTART') { 
+      state.status = 'restart'
+      clearInterval(state.totalTimer)
+      state.totalTimer = null
+      state.winner = null
+      state.computerChess = 1
+      state.steps = 0
+      state.totalTime = 0
+      state.record = []
+      state.redo = []
+    } else if (action.type === 'STEPS') {
+      state.steps++
+    } else if (action.type === 'CHANGE') {
+      state.computerChess = action.payload.computerChess
+    } else if (action.type === 'UNDO') {
+      state.undo = action.payload.undo
+      // 完成undo，step减一回合
+      if (!state.undo) {
+        state.steps--
+        state.redo.pop()
+        state.redo.pop()
+        state.record.push({ type: 'undo', text: '玩家悔棋' })
+        scrollBottom(state.ref)
+      }
+    } else if (action.type === 'TIPS') {
+      state.tips = action.payload.tips
+      if (!state.tips) {
+        const {x, y} = action.payload.position
+        state.record.push({ ...action.payload, text: `推荐位置(${RulerMap[x]}, ${y})` })
+        scrollBottom(state.ref)
+      }
     }
 
+    return state
+  }
+
+  function App() {
+    const RecordRef = useRef()
+    const classes = useStyles()
+    const [choiceVisible, setChoiceVisible] = useState(true)
+    const [open, setOpen] = useState(false)
+    const [over, setOver] = useState(false)
+    const [AI, setAI] = useState(false)
+    const [time, setTime] = useState(0)
+    const [store, dispatch] = useReducer(storeReducer, Store)
+
+    const start = (computerFirst) => {
+      dispatch({ type: 'CHANGE', payload: { computerChess: computerFirst ? 2 : 1 } })
+      setOver(false)
+      setAI(computerFirst)
+      setChoiceVisible(false)
+      const timer = setInterval(() => {
+        setTime(c => c + 1)
+      }, 1000)
+      dispatch({ type: 'START', payload: { timer } })
+    }
+
+    const microtask = () => Promise.resolve()
+
+    const openRestartDialog = async () => {
+      if (store.status === 'end') {
+        setAI(false)
+        dispatch({ type: 'RESTART' })
+        setTime(0)
+        await microtask()
+        start(AI)
+      } else {
+        setOpen(true)
+      }
+    }
+    const restart = async () => {
+      setAI(false)
+      setOpen(false)
+      dispatch({ type: 'RESTART' })
+      await microtask()
+      setTime(0)
+      start(AI)
+    }
+
+    const choiceChess = () => {
+      setAI(false)
+      dispatch({ type: 'RESTART' })
+      setTime(0)
+      setChoiceVisible(true)
+    }
+
+    const stop = () => {
+      if (store.status === 'end') return
+      dispatch({ type: 'STOP', payload: { winner: 'computer'  } })
+      setOver(true)
+    }
+
+    const undo = () => {
+      if (store.status === 'end') return
+      if (!store.redo.length || !store.redo.some(r => r.who === 'gamer')) return
+      dispatch({ type: 'UNDO', payload: { undo: true } })
+    }
+
+    const tips = () => {
+      if (store.status === 'end') return
+      dispatch({ type: 'TIPS', payload: { tips: true } })
+    }
+
+    if(store.status === 'end') {
+      setTimeout(() => setTime(0))
+    }
+
+    useEffect(() => {
+      dispatch({ type: 'REF', payload: { element: RecordRef.current } })
+    }, [])
+
     return (
-      <Container maxWidth={false} fixed className={classes.container}>
-        <Backdrop className={classes.choice} open={choiceChess}>
-          <div>执黑棋者先下</div>
-          <div>请选择你的棋子</div>
-          <div>
-            <Button variant="contained" color="primary" style={{ backgroundColor: '#000' }} onClick={() => start(false)}>黑棋</Button>
-            <Button variant="contained" color="primary" style={{ backgroundColor: '#fff', color: '#000' }} onClick={() => start(true)}>白棋</Button>
-          </div>
-        </Backdrop>
-        <div id="canvas-container" className={classes.itemA}>
-          <Gomoku AI={AI} />
-        </div>
-        <div className={classes.itemB}>
-          <div className={classes.action}>
-            <Icon className={classes.icon}>restore</Icon>
-            <Button className={classes.button}>重新开始</Button>
-          </div>
-          <div className={classes.action}>
-            <Icon className={classes.icon}>call_missed</Icon>
-            <Button className={classes.button}>悔棋</Button>
-          </div>
-          <div className={classes.action}>
-            <Icon className={classes.icon}>contact_support</Icon>
-            <Button className={classes.button}>提示</Button>
-          </div>
-          <div className={classes.action}>
-            <Icon className={classes.icon}>mood</Icon>
-            <Button className={classes.button}>认输</Button>
-          </div>
-        </div>
-        <div className={classes.itemC}>
-          <div className={classes.title}>记录器</div>
-          <div className={classes.record}>
-            回合: 5 <br/>
-            时间: {totalTime}
-          </div>
-          <div className={classes.steps}>
-            <div className={classes.computer}>
-              <Icon className={classes.icon}>laptop</Icon>
-              <div>
-                <strong>(1, A)</strong>
-                <p>用时: 12ms</p>
-              </div>
+      <StoreContext.Provider value={[store, dispatch]}>
+        <Container maxWidth={false} fixed className={classes.container}>
+          <Backdrop className={classes.choice} open={choiceVisible}>
+            <div>执黑棋者先下</div>
+            <div>请选择你的棋子</div>
+            <div>
+              <Button variant="contained" color="primary" style={{ backgroundColor: '#000' }}
+                      onClick={() => start(false)}>黑棋</Button>
+              <Button variant="contained" color="primary" style={{ backgroundColor: '#fff', color: '#000' }}
+                      onClick={() => start(true)}>白棋</Button>
             </div>
-            <div className={classes.gamer}>
-              <Icon className={classes.icon}>directions_walk</Icon>
-              <div>
-                <strong>(1, A)</strong>
-                <p>用时: 1s</p>
-              </div>
+          </Backdrop>
+          <div id="canvas-container" className={classes.itemA}>
+            <Gomoku AI={AI}/>
+            {(over || store.status === 'end') && <div className={classes.over}></div>}
+          </div>
+          <div className={classes.itemB}>
+            <div className={classes.action} onClick={choiceChess}>
+              <Icon className={classes.icon}>beenhere</Icon>
+              <Button className={classes.button}>重选棋子</Button>
+            </div>
+            <div className={classes.action} onClick={openRestartDialog}>
+              <Icon className={classes.icon}>restore</Icon>
+              <Button className={classes.button}>重新开始</Button>
+            </div>
+            <div className={classes.action} onClick={undo}>
+              <Icon className={classes.icon}>call_missed</Icon>
+              <Button className={classes.button}>悔棋</Button>
+            </div>
+            <div className={classes.action} onClick={tips}>
+              <Icon className={classes.icon}>contact_support</Icon>
+              <Button className={classes.button}>提示</Button>
+            </div>
+            <div className={classes.action} onClick={stop}>
+              <Icon className={classes.icon}>mood</Icon>
+              <Button className={classes.button}>认输</Button>
             </div>
           </div>
-          <div className={classes.timer}>倒计时&nbsp;&nbsp;<span>30</span>&nbsp;s</div>
-        </div>
-      </Container>
+          <div className={classes.itemC}>
+            <div className={classes.title}>记录器</div>
+            <div className={classes.steps}>
+              回合: {store.steps} <br/>
+              时间: {time}
+            </div>
+            <div ref={RecordRef} className={classes.record}>
+              {
+                store.record.map((rec, index) => {
+                  let Dom
+                  if (rec.type === 'chess') {
+                    Dom = <div className={classes[rec.who] + ' zoomIn'} key={index}>
+                      <Icon className={classes.icon}>{rec.who === 'computer' ? 'laptop' : 'directions_walk'}</Icon>
+                      <div>
+                        <strong>位置: {rec.text}</strong>
+                        <p>用时: {rec.duration}</p>
+                      </div>
+                    </div>
+                  } else {
+                    Dom = <div className={classes.undo} key={index}>
+                      <span>{rec.text}</span>
+                    </div>
+                  }
+                  return Dom
+                })
+              }
+            </div>
+            <div className={classes.timer}>倒计时&nbsp;&nbsp;<span>30</span>&nbsp;s</div>
+          </div>
+        </Container>
+        <Dialog
+          open={open}
+          disableBackdropClick={true}
+        >
+          <DialogTitle>{'温馨提示'}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              棋局还未结束，还有机会哦，确定重新开一局?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)} color="primary">
+              继续战斗
+            </Button>
+            <Button onClick={restart} color="secondary">
+              重新开局
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </StoreContext.Provider>
     )
   }
 
