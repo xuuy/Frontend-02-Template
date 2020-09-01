@@ -130,6 +130,7 @@
   const gamerOB = new observePerformance('gamer')
   const computerOB = new observePerformance('computer')
 
+  let count = 0
   const Gomoku = (props) => {
     const [store, dispatch] = useContext(StoreContext)
     const canvasRef = useRef('canvas')
@@ -145,7 +146,6 @@
     let [wins] = useState([]) //赢法数组
     let [gamerWin] = useState([])
     let [computerWin] = useState([])
-    let [count] = useState(0)
     let isBlackChess = 2
     let cursorPoint = {}
     let gamerScore = [] //评分数组
