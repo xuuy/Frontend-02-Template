@@ -42,6 +42,7 @@
           border-radius: 12px;
           background-color: transparent;
           cursor: pointer;
+          transform: scale(.5);
       }
 
       @keyframes zoomIn {
@@ -173,10 +174,17 @@
       setChessRadius(chessRadius)
 
       // 设置画布大小
-      canvas.width = diff
-      canvas.height = diff
+      if(window.devicePixelRatio) {
+        canvas.width = diff * window.devicePixelRatio
+        canvas.height = diff * window.devicePixelRatio
+      } else {
+        canvas.width = diff
+        canvas.height = diff
+      }
+
       // 获取canvas上下文
       context = canvas.getContext('2d')
+      context.scale(window.devicePixelRatio, window.devicePixelRatio)
       setContext(context)
     }
 
@@ -637,6 +645,7 @@
      * 计算鼠标X方位在那个点上
      */
     const locationX = (canvasX) => {
+      canvasX /= 2
       const XPointInt = Math.floor(
         (canvasX - chessBoardPadding) / chessBoardCellWidth
       )
@@ -671,6 +680,7 @@
      * 计算鼠标Y方位在那个点上
      */
     const locationY = (canvasY) => {
+      canvasY /= 2
       const YPointInt = parseInt(
         (canvasY - chessBoardPadding) / chessBoardCellWidth
       )
