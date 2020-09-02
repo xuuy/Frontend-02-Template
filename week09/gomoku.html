@@ -246,8 +246,6 @@
         }
       }
 
-      // setChessCollection
-
       let len = chessBoardLine - 4
 
       //横向赢法
@@ -720,6 +718,14 @@
       dispatch({ type: 'TIPS', payload: { tips: false, position: bestChoice() } })
     }
 
+    const undo = (x, y, win1, win2) => {
+      for (let k = 0; k < count; k++) {
+        if (wins[x][y][k]) {
+          win1[k]--
+          win2[k] = 0
+        }
+      }
+    }
     if (store.undo) {
       // 一次悔棋操作，黑白棋各回退一步
       const [B, W] = store.redo.slice(-2)
@@ -735,6 +741,18 @@
           }
         }
       }
+      if(B.who === 'gamer') {
+        undo(...B.position, gamerWin, computerWin)
+      } else {
+        undo(...B.position, computerWin, gamerWin)
+      }
+
+      if(W.who === 'gamer') {
+        undo(...W.position, gamerWin, computerWin)
+      } else {
+        undo(...W.position, computerWin, gamerWin)
+      }
+
       dispatch({ type: 'UNDO', payload: { undo: false } })
     }
 
@@ -1008,7 +1026,7 @@
         text: state.winner === 'computer' ? `您输了! 不要气馁  再接再厉` : `恭喜 玩家 赢得比赛`
       })
       scrollBottom(state.ref)
-    } else if (action.type === 'RESTART') { 
+    } else if (action.type === 'RESTART') {
       state.status = 'restart'
       clearInterval(state.totalTimer)
       state.totalTimer = null
@@ -1044,6 +1062,8 @@
     return state
   }
 
+  let TipsButtonClicked = false
+  let UndoButtonClicked = false
   function App() {
     const RecordRef = useRef()
     const classes = useStyles()
@@ -1106,14 +1126,23 @@
     }
 
     const undo = () => {
-      if (store.status === 'end') return
+      if (store.status === 'end' || UndoButtonClicked) return
       if (!store.redo.length || !store.redo.some(r => r.who === 'gamer')) return
+      UndoButtonClicked = true
       dispatch({ type: 'UNDO', payload: { undo: true } })
     }
 
     const tips = () => {
-      if (store.status === 'end' || store.tips) return
+      if (store.status === 'end' || TipsButtonClicked) return
+      TipsButtonClicked = true
       dispatch({ type: 'TIPS', payload: { tips: true } })
+    }
+
+    if (!store.tips) {
+      TipsButtonClicked = false
+    }
+    if (!store.undo) {
+      UndoButtonClicked = false
     }
 
     useEffect(() => {
@@ -1193,7 +1222,7 @@
                 })
               }
             </div>
-            <div className={classes.timer}>倒计时&nbsp;&nbsp;<span>30</span>&nbsp;s</div>
+            {/*<div className={classes.timer}>倒计时&nbsp;&nbsp;<span>30</span>&nbsp;s</div>*/}
           </div>
         </Container>
         <Dialog
