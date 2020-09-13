@@ -1,0 +1,88 @@
+<div id="container">文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+  文字 文字 文字 文字 文字 文字 文字 文字
+</div>
+<div id="drag" style="display: inline-block;width: 100px;height: 100px;background-color: aqua;"></div>
+
+<script>
+  const drag = document.getElementById('drag')
+  let endX = 0,endY = 0
+  drag.addEventListener('mousedown', event => {
+    const startX = event.clientX,startY = event.clientY
+
+    const up = ev => {
+      endX = endX + ev.clientX - startX
+      endY = endY + ev.clientY - startY
+      document.removeEventListener('mouseup', up)
+      document.removeEventListener('mousemove', move)
+    }
+    const move = ev => {
+      let range = getNearest(ev.clientX, ev.clientY)
+      range.insertNode(drag)
+      // drag.style.transform = `translate(${endX + ev.clientX - startX}px, ${endY + ev.clientY - startY}px)`
+    }
+
+    document.addEventListener('mouseup', up)
+    document.addEventListener('mousemove', move)
+  })
+
+  let container = document.getElementById('container')
+  let ranges = []
+  let len = container.childNodes[0].textContent.length
+
+  for (let i = 0; i < len; i++) {
+    const range = document.createRange()
+    range.setStart(container.childNodes[0], i)
+    range.setEnd(container.childNodes[0], i)
+
+    ranges.push(range)
+  }
+
+  function getNearest(x, y) {
+    let min = Infinity
+    let nearest = null
+
+    for (const range of ranges) {
+      let rect = range.getBoundingClientRect()
+      let distance = (rect.x - x) ** 2 + (rect.y - y) ** 2
+      if (distance < min) {
+        min = distance
+        nearest = range
+      }
+    }
+
+    return nearest
+  }
+
+  document.addEventListener('selectstart', evt => evt.preventDefault())
+</script>

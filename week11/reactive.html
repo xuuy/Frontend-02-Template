@@ -1,0 +1,75 @@
+<input type="range" id=r min="0" max="255"/>
+<input type="range" id=g min="0" max="255" />
+<input type="range" id=b min="0" max="255" />
+<div id=block style="width: 100px; height: 100px;"></div>
+<script>
+const obj = {
+  r: 0,
+  g: 0,
+  b: 0
+}
+const callbacks = new Map()
+let reactivies = new Map()
+let useReactivies = []
+
+function reactive(target) {
+  if (reactivies.has(target)) {
+    return reactivies.get(target)
+  }
+
+  const handler = {
+    get(target, prop) {
+      useReactivies.push([target, prop])
+      if (typeof target[prop] === 'object')
+        return reactive(target[prop])
+      return target[prop]
+    },
+    set(target, prop, value) {
+      target[prop] = value
+      if (callbacks.get(obj)) {
+        if (callbacks.get(obj).get(prop)) {
+          for (const cb of callbacks.get(obj).get(prop)) {
+            cb()
+          }
+        }
+      }
+      return true
+    }
+  }
+  const proxy = new Proxy(target, handler)
+
+  reactivies.set(target, proxy)
+  return proxy
+}
+
+function effect(callback) {
+  useReactivies = []
+  callback()
+  for (const reactivity of useReactivies) {
+    if (!callbacks.has(reactivity[0])) {
+      callbacks.set(reactivity[0], new Map())
+    }
+    if (!callbacks.get(reactivity[0]).has(reactivity[1])) {
+      callbacks.get(reactivity[0]).set(reactivity[1], [])
+    }
+
+    callbacks.get(reactivity[0]).get(reactivity[1]).push(callback)
+  }
+}
+
+const po = reactive(obj)
+
+const changeRGB = () => {
+  console.log('change rgb', po)
+  document.getElementById('r').value = po.r
+  document.getElementById('g').value = po.g
+  document.getElementById('b').value = po.b
+  document.getElementById('block').style.backgroundColor = `rgb(${po.r}, ${po.g}, ${po.b})`
+}
+
+effect(changeRGB)
+
+document.getElementById('r').addEventListener('input', evt => po.r = evt.target.value)
+document.getElementById('g').addEventListener('input', evt => po.g = evt.target.value)
+document.getElementById('b').addEventListener('input', evt => po.b = evt.target.value)
+</script>
