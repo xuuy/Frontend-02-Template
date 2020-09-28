@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Webpack App</title>
+    <style>
+        #root {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .carousel {
+            width: 500px;
+            height: 272px;
+            border: 1px solid lightblue;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .carousel-item {
+            display: inline-block;
+            width: 500px;
+            height: 272px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: transform ease 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+<script src="../index/index.bundle.js"></script></body>
+</html>

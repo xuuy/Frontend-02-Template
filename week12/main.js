@@ -1,4 +1,9 @@
 import { Component, h, render } from "./f7.js";
+import w1 from './images/w1.jpg'
+import w2 from './images/w2.jpg'
+import w3 from './images/w3.jpg'
+import w4 from './images/w4.jpg'
+import w5 from './images/w5.jpg'
 
 class App extends Component {
   constructor(props) {
@@ -33,6 +38,7 @@ class App extends Component {
 }
 
 const Carousel = (props) => {
+  const { } = props
   //鼠标事件
   setTimeout(() => {
     const container = document.getElementById('container')
@@ -102,11 +108,11 @@ render(
   <App>
     <Carousel
       images={[
-        "./images/w1.jpg",
-        "./images/w2.jpg",
-        "./images/w3.jpg",
-        "./images/w4.jpg",
-        "./images/w5.jpg",
+        w1,
+        w2,
+        w3,
+        w4,
+        w5,
       ]}
     />
   </App>,
