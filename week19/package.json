@@ -1,0 +1,14 @@
+{
+  "name": "dev-ops",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Mack <17602124574@163.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/ui-test.js"
+  },
+  "devDependencies": {
+    "eslint": "^7.13.0",
+    "puppeteer": "^5.4.1"
+  }
+}
